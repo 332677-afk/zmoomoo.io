@@ -297,8 +297,12 @@ export class Player {
             if (timerCount <= 0) {
 
                 if (this.pps) {
-                    var goldTick = this.pps;
-                    if (config.isSandbox && this.sandboxMillCount > 0) {
+                    let goldTick = this.pps;
+                    const millPoints = typeof config.millPointsPerTick === "number" ? config.millPointsPerTick : null;
+                    const totalMills = this.itemCounts && this.itemCounts[3] ? this.itemCounts[3] : 0;
+                    if (millPoints && totalMills > 0) {
+                        goldTick = totalMills * millPoints;
+                    } else if (config.isSandbox && this.sandboxMillCount > 0) {
                         goldTick = 10000 * this.sandboxMillCount;
                     }
                     this.addResource(3, goldTick, true);

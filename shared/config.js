@@ -146,7 +146,7 @@ var groupedConfig = {
     },
 
     sandbox: {
-        isSandbox: false,
+        isSandbox: true,
         millPpsMultiplier: 5,
         sandboxBuildLimits: sandboxBuildLimits
     },
@@ -228,6 +228,10 @@ var groupedConfig = {
         gatheringMultiplier: 4,
         goldBonusResources: 4,
         goldGenerationXP: 0.1
+    },
+
+    economy: {
+        millPointsPerTick: 5000
     },
 
     combat: {
