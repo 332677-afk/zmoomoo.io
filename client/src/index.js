@@ -374,6 +374,7 @@ var youtuberList = [{
 
 var tmpYoutuber = youtuberList[UTILS.randInt(0, youtuberList.length - 1)];
 (function() {
+    // build the youtuber link dynamically instead of throwing raw html around
     UTILS.removeAllChildren(featuredYoutuber);
     var link = document.createElement('a');
     link.target = '_blank';
@@ -415,6 +416,7 @@ function showLoadingText(text) {
     diedText.style.display = "none";
     loadingText.style.display = "block";
     UTILS.removeAllChildren(loadingText);
+    // safe way to add text without risking injection stuff
     loadingText.appendChild(document.createTextNode(text));
     var reloadLink = document.createElement('a');
     reloadLink.href = '#';
@@ -1296,10 +1298,13 @@ function prepareUI() {
                     this.isLoaded = true;
                     var tmpPad = 1 / (this.height / this.width);
                     var tmpMlt = (items.weapons[i].iPad || 1);
+                    // save/restore to keep canvas state clean
+                    tmpContext.save();
                     tmpContext.drawImage(this, -(tmpCanvas.width * tmpMlt * config.iconPad * tmpPad) / 2, -(tmpCanvas.height * tmpMlt * config.iconPad) / 2, tmpCanvas.width * tmpMlt * tmpPad * config.iconPad, tmpCanvas.height * tmpMlt * config.iconPad);
                     tmpContext.fillStyle = "rgba(0, 0, 70, 0.1)";
                     tmpContext.globalCompositeOperation = "source-atop";
                     tmpContext.fillRect(-tmpCanvas.width / 2, -tmpCanvas.height / 2, tmpCanvas.width, tmpCanvas.height);
+                    tmpContext.restore();
                     document.getElementById('actionBarItem' + i).style.backgroundImage = "url(" + tmpCanvas.toDataURL() + ")";
                 };
                 tmpSprite.src = ".././img/weapons/" + items.weapons[i].src + ".png";
@@ -1315,10 +1320,13 @@ function prepareUI() {
                 var tmpSprite = getItemSprite(items.list[i - items.weapons.length], true);
                 var tmpScale = Math.min(tmpCanvas.width - config.iconPadding, tmpSprite.width);
                 tmpContext.globalAlpha = 1;
+                // keep canvas state isolated so nothing bleeds into other renders
+                tmpContext.save();
                 tmpContext.drawImage(tmpSprite, -tmpScale / 2, -tmpScale / 2, tmpScale, tmpScale);
                 tmpContext.fillStyle = "rgba(0, 0, 70, 0.1)";
                 tmpContext.globalCompositeOperation = "source-atop";
                 tmpContext.fillRect(-tmpScale / 2, -tmpScale / 2, tmpScale, tmpScale);
+                tmpContext.restore();
                 document.getElementById('actionBarItem' + i).style.backgroundImage = "url(" + tmpCanvas.toDataURL() + ")";
                 var tmpUnit = document.getElementById('actionBarItem' + i);
                 tmpUnit.onmouseover = UTILS.checkTrusted(function () {
@@ -1393,6 +1401,7 @@ function toggleSettings() {
 
 function updateSkinColorPicker() {
     UTILS.removeAllChildren(skinColorHolder);
+    // build color divs instead of using innerHTML
     for (var i = 0; i < config.skinColors.length; ++i) {
         var colorDiv = document.createElement('div');
         colorDiv.className = 'skinColorItem' + (i == skinColor ? ' activeSkin' : '');
@@ -1657,6 +1666,7 @@ var keyCodeMap = {
     'Digit6': 54, 'Digit7': 55, 'Digit8': 56, 'Digit9': 57
 };
 
+// normalize keys - handles modern key codes and falls back to legacy stuff
 function getKeyCode(event) {
     if (event.code && keyCodeMap[event.code]) {
         return keyCodeMap[event.code];
@@ -2126,10 +2136,12 @@ function updateGame() {
         renderPlayers(xOffset, yOffset, 0);
 
         mainContext.globalAlpha = 1;
+        // render ai creatures with proper state management
         for (var i = 0; i < ais.length; ++i) {
             tmpObj = ais[i];
             if (tmpObj.active && tmpObj.visible) {
                 tmpObj.animate(delta);
+                // save before translate/rotate so nothing messes up other renders
                 mainContext.save();
                 mainContext.translate(tmpObj.x - xOffset, tmpObj.y - yOffset);
                 mainContext.rotate(tmpObj.dir + tmpObj.dirPlus - (Math.PI / 2));
