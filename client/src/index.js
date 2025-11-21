@@ -2302,8 +2302,10 @@ function renderProjectile(x, y, obj, ctxt, debug) {
         if (tmpSprite.isLoaded) {
             ctxt.drawImage(tmpSprite, x - (obj.scale / 2), y - (obj.scale / 2), obj.scale, obj.scale);
         } else {
+            ctxt.save();
             ctxt.fillStyle = "#888888";
             renderCircle(x, y, obj.scale / 2, ctxt);
+            ctxt.restore();
         }
     } else if (obj.indx == 1) {
         ctxt.fillStyle = "#939393";
@@ -2449,10 +2451,11 @@ function renderSkin(index, ctxt, parentSkin, owner) {
     if (tmpSkin.isLoaded) {
         ctxt.drawImage(tmpSkin, -tmpObj.scale / 2, -tmpObj.scale / 2, tmpObj.scale, tmpObj.scale);
     } else {
+        ctxt.save();
         ctxt.fillStyle = "#666666";
         ctxt.globalAlpha = 0.4;
         ctxt.fillRect(-tmpObj.scale / 2, -tmpObj.scale / 2, tmpObj.scale, tmpObj.scale);
-        ctxt.globalAlpha = 1;
+        ctxt.restore();
     }
     if (!parentSkin && tmpObj.topSprite) {
         ctxt.save();
@@ -2969,10 +2972,11 @@ function renderAI(obj, ctxt) {
         var tmpScale = obj.scale * 1.2 * (obj.spriteMlt || 1);
         ctxt.drawImage(tmpSprite, -tmpScale, -tmpScale, tmpScale * 2, tmpScale * 2);
     } else {
+        ctxt.save();
         ctxt.fillStyle = "#777777";
         ctxt.globalAlpha = 0.5;
         renderCircle(0, 0, obj.scale, ctxt);
-        ctxt.globalAlpha = 1;
+        ctxt.restore();
     }
 }
 
