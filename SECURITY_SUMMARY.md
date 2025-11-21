@@ -1,7 +1,7 @@
-# Security Hardening Summary - By Zahirr
+# Security Hardening Summary
 
 ## Overview
-I've successfully hardened the MooMoo.io clone by addressing 7 critical and medium-priority vulnerabilities found during a comprehensive security audit. All fixes have been tested and the server is running securely on port 5000.
+I've successfully hardened the MooMoo.io clone by addressing 7 critical and medium-priority vulnerabilities found during a comprehensive security audit. All fixes have been tested and the server is running securely.
 
 ## What I Fixed
 
@@ -48,31 +48,6 @@ Added placeholder shapes that display while assets load:
 - **Chat Filtering**: Server filters profanity before broadcasting messages
 - **WebSocket Protection**: Try/catch blocks around MsgPack decoding prevent crashes
 
-## How to Push to GitHub
-
-```bash
-# Stage all changes
-git add .
-
-# Commit with descriptive message
-git commit -m "Security hardening: Fix XSS vulnerabilities, remove config exposure, modernize keyboard input
-
-- Replace all unsafe innerHTML with safe DOM methods
-- Remove global window.config exposure
-- Implement modern event.code keyboard mapping with legacy fallback
-- Add asset rendering fallbacks during load times
-- Verify server-side security controls
-- Update deployment configuration for Replit"
-
-# Push to your repository
-git push origin main
-```
-
-Or if pushing to a specific branch:
-```bash
-git push origin develop
-```
-
 ## Files Modified
 - `client/src/index.js` - All security fixes implemented
 - `replit.md` - Updated project documentation
@@ -87,4 +62,4 @@ The game server is running successfully and all security fixes have been validat
 - Asset loading fallbacks working as expected
 
 ## Deployment
-The app is ready to deploy! When you're ready, click the "Publish" button in Replit to make it live.
+The app is ready to deploy!

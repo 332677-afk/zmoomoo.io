@@ -36,8 +36,7 @@ All notable changes to the MooMoo.io Clone project will be documented in this fi
 
 ### Build & Deployment
 - Client successfully rebuilt with Webpack
-- Server configured for Replit deployment on port 5000
-- Deployment settings configured for autoscale production environment
+- Server configured and running on port 5000
 
 ## [1.0.0] - Initial Release
 - Full-stack MooMoo.io clone with Webpack client and Node.js WebSocket server

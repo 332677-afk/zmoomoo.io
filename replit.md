@@ -1,4 +1,4 @@
-# MooMoo.io Clone - Replit Project
+# MooMoo.io Clone
 
 ## Overview
 Full-stack MooMoo.io private server with client (Webpack-based) and game server (Node.js ES modules). This is an educational fan project clone of MooMoo.io.
@@ -52,7 +52,7 @@ npm run build
 - **SERVER_REGION**: Server region identifier
 
 ## Deployment
-The game server serves both the static client assets and WebSocket connections on a single port. Configure for Replit deployment with port 5000.
+The game server serves both the static client assets and WebSocket connections on a single port.
 
 ## Technical Stack
 - **Frontend**: Webpack 4, Babel, jQuery, MsgPack
