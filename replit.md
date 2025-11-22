@@ -62,13 +62,15 @@ The game server serves both the static client assets and WebSocket connections o
 
 ## Recent Fixes (November 22, 2025)
 
-### Projectile Rendering Bug Fix
-- **Issue**: Hunting bow, crossbow, and musket projectiles were rendering as oversized balls instead of proper sprites
-- **Root Cause**: Incorrect scale values in projectile configuration (arrows: 103px, bullets: 160px - too large)
-- **Solution**: Corrected scale values at source in `shared/config/items.js`:
-  - Arrow projectiles (hunting bow, crossbow, repeater crossbow): reduced scale from 103 to 50
-  - Bullet projectiles (musket): reduced scale from 160 to 30
-- **Impact**: All projectiles now render at appropriate sizes without affecting other game mechanics
+### Projectile Sprite Loading Fix
+- **Issue**: Projectiles (hunting bow, crossbow, musket) were showing as fallback circles instead of proper sprites
+- **Root Cause**: Incorrect sprite path in `renderProjectile()` function prevented images from loading
+- **Solution**: Fixed sprite loading in `client/src/index.js`:
+  - Corrected sprite path from "./img/weapons/" to "../img/weapons/" to properly resolve from HTML location
+  - Restored original projectile scales (arrows: 103px, bullets: 160px) for authentic rendering
+  - Added minimal 4px semi-transparent fallback dot that only shows briefly during sprite loading
+  - Added onload handler cleanup to prevent memory leaks
+- **Impact**: All projectiles now render as proper sprites (arrows/bullets) at their original intended sizes
 
 ## Current State
 - ✅ All dependencies installed
