@@ -88,7 +88,7 @@ exports.projectiles = [{
     src: "arrow_1",
     dmg: 25,
     speed: 1.6,
-    scale: 103,
+    scale: 50,
     range: 1000
 }, {
     indx: 1,
@@ -101,7 +101,7 @@ exports.projectiles = [{
     src: "arrow_1",
     dmg: 35,
     speed: 2.5,
-    scale: 103,
+    scale: 50,
     range: 1200
 }, {
     indx: 0,
@@ -109,7 +109,7 @@ exports.projectiles = [{
     src: "arrow_1",
     dmg: 30,
     speed: 2,
-    scale: 103,
+    scale: 50,
     range: 1200
 }, {
     indx: 1,
@@ -122,7 +122,7 @@ exports.projectiles = [{
     src: "bullet_1",
     dmg: 50,
     speed: 3.6,
-    scale: 160,
+    scale: 30,
     range: 1400
 }];
 
