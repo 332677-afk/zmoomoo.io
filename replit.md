@@ -60,11 +60,22 @@ The game server serves both the static client assets and WebSocket connections o
 - **Shared**: Centralized game configuration
 - **Security**: Server-side validation, input sanitization, error handling
 
+## Recent Fixes (November 22, 2025)
+
+### Projectile Rendering Bug Fix
+- **Issue**: Hunting bow, crossbow, and musket projectiles were rendering as oversized balls instead of proper sprites
+- **Root Cause**: Incorrect scale values in projectile configuration (arrows: 103px, bullets: 160px - too large)
+- **Solution**: Corrected scale values at source in `shared/config/items.js`:
+  - Arrow projectiles (hunting bow, crossbow, repeater crossbow): reduced scale from 103 to 50
+  - Bullet projectiles (musket): reduced scale from 160 to 30
+- **Impact**: All projectiles now render at appropriate sizes without affecting other game mechanics
+
 ## Current State
 - ✅ All dependencies installed
 - ✅ Client successfully built with security fixes
 - ✅ Server running on port 5000
 - ✅ Security vulnerabilities addressed
+- ✅ Projectile rendering bug fixed
 - ⏳ Deployment configuration pending
 
 ## Notes
