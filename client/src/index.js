@@ -2439,7 +2439,7 @@ function updateGame() {
         mainContext.textAlign = "left";
         mainContext.textBaseline = "top";
         
-        mainContext.fillText("=== PLAYER IDS ===" + (playerIDsInfinite ? " (INFINITE)" : ""), startX, startY);
+        mainContext.fillText("=== PLAYER IDS ===", startX, startY);
         
         for (var i = 0; i < playerIDsToDisplay.length; ++i) {
             var p = playerIDsToDisplay[i];

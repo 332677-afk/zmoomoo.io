@@ -524,7 +524,10 @@ export class AdminCommands {
         }
         
         const weaponId = parseInt(params[0]);
-        const targets = this.getTargetPlayer(params[1], player);
+        const targetId = params[1];
+        const targets = this.getTargetPlayer(targetId, player);
+        
+        console.log(`[Admin] weapongive: weaponId=${weaponId}, targetId=${targetId}, targets.length=${targets.length}`);
         
         if (isNaN(weaponId) || weaponId < 0 || weaponId > 15) {
             return { success: false, message: 'Invalid weapon ID (must be 0-15)' };
@@ -534,14 +537,25 @@ export class AdminCommands {
             return { success: false, message: 'Player not found' };
         }
         
+        let addedCount = 0;
         targets.forEach(target => {
+            if (!Array.isArray(target.weapons)) {
+                console.log(`[Admin] WARNING: target.weapons is not an array: ${typeof target.weapons}`);
+                target.weapons = [0]; // Initialize if missing
+            }
+            
+            console.log(`[Admin] Before: target (${target.sid}) weapons = ${JSON.stringify(target.weapons)}`);
+            
             // Add weapon to inventory if not already there
             if (!target.weapons.includes(weaponId)) {
                 target.weapons.push(weaponId);
+                addedCount++;
             }
+            
+            console.log(`[Admin] After: target (${target.sid}) weapons = ${JSON.stringify(target.weapons)}`);
         });
         
-        return { success: true, message: `Gave weapon ${weaponId} to ${targets.length} player(s)` };
+        return { success: true, message: `Gave weapon ${weaponId} to ${addedCount}/${targets.length} player(s)` };
     }
 
     handleWeaponRemove(params, player) {
