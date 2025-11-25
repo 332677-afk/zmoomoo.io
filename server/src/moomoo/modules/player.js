@@ -135,6 +135,7 @@ export class Player {
             this.sandboxMillCount = 0;
             this.packetCounter = 0;
             this.packetWindowStart = Date.now();
+            this.gameMode = 0;
             this.hasShield = false;
 
             const spawn = objectManager.fetchSpawnObj(this.sid);
@@ -387,7 +388,15 @@ export class Player {
                 this.yVel = 0;
             } else {
                 var buildPenalty = (this.buildIndex >= 0) ? (config.physics ? config.physics.buildingSpeedPenalty : 0.5) : 1;
+                // Editor mode: always move at maximum speed
+                if (this.gameMode === 1) {
+                    buildPenalty = 1;
+                }
                 var spdMult = buildPenalty * (items.weapons[this.weaponIndex].spdMult || 1) * (this.skin ? this.skin.spdMult || 1 : 1) * (this.tail ? this.tail.spdMult || 1 : 1) * (this.y <= config.snowBiomeTop ? this.skin && this.skin.coldM ? 1 : config.snowSpeed : 1) * this.slowMult * (this.speedMultiplier || 1);
+                // Editor mode: speed boost
+                if (this.gameMode === 1) {
+                    spdMult *= 2.5;
+                }
                 if (!this.zIndex && this.y >= config.mapScale / 2 - config.riverWidth / 2 && this.y <= config.mapScale / 2 + config.riverWidth / 2) {
                     if (this.skin && this.skin.watrImm) {
                         spdMult *= (config.water ? config.water.immunitySpeedMultiplier : 0.75);
@@ -592,6 +601,10 @@ export class Player {
                 }
                 return false; // No damage dealt
             }
+            // Editor mode players cannot take damage
+            if (this.gameMode === 1 && amount < 0) {
+                return false;
+            }
             if (this.isInvincible && amount < 0) {
                 return false;
             }
@@ -676,6 +689,30 @@ export class Player {
             var tmpX = this.x + tmpS * mathCOS(this.dir);
             var tmpY = this.y + tmpS * mathSIN(this.dir);
             
+            // Editor mode: different behavior
+            if (this.gameMode === 1) {
+                if (this.canBuild(item)) {
+                    if (!item.consume) {
+                        // Place item without consuming resources
+                        if (item.group && item.group.limit) {
+                            this.changeItemCount(item.group.id, 1);
+                        }
+                        var placedItem = item;
+                        if (item.pps) {
+                            var sandboxMultiplier = config.isSandbox ? (config.millPpsMultiplier || 1) : 1;
+                            var ppsToAdd = item.pps * sandboxMultiplier;
+                            this.pps += ppsToAdd;
+                            placedItem = Object.assign({}, item, {
+                                pps: ppsToAdd
+                            });
+                        }
+                        objectManager.add(objectManager.objects.length, tmpX, tmpY, this.dir, item.scale, item.type, placedItem, false, this);
+                        // KEEP buildIndex selected - don't reset to -1
+                    }
+                }
+                return;
+            }
+            
             if (this.canBuild(item) && !(item.consume && this.skin && this.skin.noEat) && (item.consume || objectManager.checkItemLocation(tmpX, tmpY, item.scale, 0.6, item.id, false, this))) {
                 var worked = false;
                 if (item.consume) {
@@ -745,6 +782,11 @@ export class Player {
 
         // CAN BUILD:
         this.canBuild = function(item) {
+            // Editor mode: no restrictions
+            if (this.gameMode === 1) {
+                return true;
+            }
+            
             if (config.isSandbox) {
                 if (item.group) {
                     var count = this.itemCounts[item.group.id] || 0;
@@ -837,6 +879,10 @@ export class Player {
             for (var i = 0; i < players.length + ais.length; ++i) {
                 tmpObj = players[i] || ais[i - players.length];
                 if (tmpObj != this && tmpObj.alive && !(tmpObj.team && tmpObj.team == this.team)) {
+                    // Editor mode can't hit AI
+                    if (this.gameMode === 1 && tmpObj.isAI) {
+                        continue;
+                    }
                     tmpDist = UTILS.getDistance(this.x, this.y, tmpObj.x, tmpObj.y) - tmpObj.scale * 1.8;
                     if (tmpDist <= weaponRange) {
                         tmpDir = UTILS.getDirection(tmpObj.x, tmpObj.y, this.x, this.y);

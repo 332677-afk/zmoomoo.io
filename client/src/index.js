@@ -1670,9 +1670,7 @@ var keyCodeMap = {
     'KeyQ': 81, 'KeyR': 82,
     'Space': 32, 'Escape': 27, 'Enter': 13,
     'Digit1': 49, 'Digit2': 50, 'Digit3': 51, 'Digit4': 52, 'Digit5': 53,
-    'Digit6': 54, 'Digit7': 55, 'Digit8': 56, 'Digit9': 57,
-    'Numpad1': 49, 'Numpad2': 50, 'Numpad3': 51, 'Numpad4': 52, 'Numpad5': 53,
-    'Numpad6': 54, 'Numpad7': 55, 'Numpad8': 56, 'Numpad9': 57
+    'Digit6': 54, 'Digit7': 55, 'Digit8': 56, 'Digit9': 57
 };
 
 // normalize keys - handles modern key codes and falls back to legacy stuff
@@ -1709,21 +1707,10 @@ function keyDown(event) {
                 updateMapMarker();
             } else if (keyNum == 88) {
                 sendLockDir();
-            } else if (keyNum >= 49 && keyNum <= 57) {
-                // Keys 1-9: Handle item selection - match exact action bar click logic
-                var keyIndex = keyNum - 49; // 0-8
-                var numWeapons = items.weapons ? items.weapons.length : 0;
-                
-                if (player && player.items) {
-                    // Action bar has weapons (0 to numWeapons-1), then items
-                    if (keyIndex < numWeapons) {
-                        // Weapon slot - exactly like line 1323: selectToBuild(i, true)
-                        selectToBuild(keyIndex, true);
-                    } else {
-                        // Item slot - exactly like line 1343: selectToBuild(i - items.weapons.length)
-                        selectToBuild(keyIndex - numWeapons);
-                    }
-                }
+            } else if (player.weapons[keyNum - 49] != undefined) {
+                selectToBuild(player.weapons[keyNum - 49], true);
+            } else if (player.items[keyNum - 49 - player.weapons.length] != undefined) {
+                selectToBuild(player.items[keyNum - 49 - player.weapons.length]);
             } else if (keyNum == 81) {
                 selectToBuild(player.items[0]);
             } else if (keyNum == 82) {
@@ -2367,8 +2354,8 @@ function updateGame() {
         }
 
         mainContext.globalAlpha = 1;
-        // Dark mode overlay removed - was causing issues with tribe creation
-        // If darkMode is needed, it should be implemented differently
+        mainContext.fillStyle = "rgba(0, 0, 70, 0.35)";
+        mainContext.fillRect(0, 0, maxScreenWidth, maxScreenHeight);
 
         mainContext.strokeStyle = darkOutlineColor;
         for (var i = 0; i < players.length + ais.length; ++i) {
