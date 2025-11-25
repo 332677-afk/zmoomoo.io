@@ -520,14 +520,14 @@ export class AdminCommands {
 
     handleWeaponGive(params, player) {
         if (params.length < 2) {
-            return { success: false, message: 'Usage: /weapongive [weapon ID 1-16] [player ID|all|others]' };
+            return { success: false, message: 'Usage: /weapongive [weapon ID 0-15] [player ID|all|others]' };
         }
         
         const weaponId = parseInt(params[0]);
         const targets = this.getTargetPlayer(params[1], player);
         
-        if (weaponId < 1 || weaponId > 16) {
-            return { success: false, message: 'Invalid weapon ID (must be 1-16)' };
+        if (isNaN(weaponId) || weaponId < 0 || weaponId > 15) {
+            return { success: false, message: 'Invalid weapon ID (must be 0-15)' };
         }
         
         if (targets.length === 0) {
@@ -535,9 +535,9 @@ export class AdminCommands {
         }
         
         targets.forEach(target => {
-            const weapon = items.weapons[weaponId];
-            if (weapon) {
-                target.weapons[weapon.type] = weaponId;
+            // Add weapon to inventory if not already there
+            if (!target.weapons.includes(weaponId)) {
+                target.weapons.push(weaponId);
             }
         });
         
@@ -546,14 +546,14 @@ export class AdminCommands {
 
     handleWeaponRemove(params, player) {
         if (params.length < 2) {
-            return { success: false, message: 'Usage: /weaponremove [weapon ID 1-16] [player ID|all|others]' };
+            return { success: false, message: 'Usage: /weaponremove [weapon ID 0-15] [player ID|all|others]' };
         }
         
         const weaponId = parseInt(params[0]);
         const targets = this.getTargetPlayer(params[1], player);
         
-        if (weaponId < 1 || weaponId > 16) {
-            return { success: false, message: 'Invalid weapon ID (must be 1-16)' };
+        if (isNaN(weaponId) || weaponId < 0 || weaponId > 15) {
+            return { success: false, message: 'Invalid weapon ID (must be 0-15)' };
         }
         
         if (targets.length === 0) {
@@ -561,10 +561,14 @@ export class AdminCommands {
         }
         
         targets.forEach(target => {
-            const weapon = items.weapons[weaponId];
-            if (weapon) {
-                // Remove weapon by deleting the key associated with that weapon type
-                delete target.weapons[weapon.type];
+            // Remove weapon from inventory
+            const index = target.weapons.indexOf(weaponId);
+            if (index > -1) {
+                target.weapons.splice(index, 1);
+                // If the removed weapon was selected, switch to first weapon
+                if (target.weaponIndex === index && target.weapons.length > 0) {
+                    target.weaponIndex = 0;
+                }
             }
         });
         
