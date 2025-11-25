@@ -262,6 +262,8 @@ export class AdminCommands {
                 return this.handleWeaponRange(params, player);
             case 'gamemode':
                 return this.handleGameMode(params, player);
+            case 'shield':
+                return this.handleShield(params, player);
             default:
                 return { success: false, message: `Unknown command: ${command}` };
         }
@@ -1601,5 +1603,38 @@ export class AdminCommands {
 
         const modeText = mode === 1 ? 'editor' : 'normal';
         return { success: true, message: `Set ${targets.length} player(s) to ${modeText} mode` };
+    }
+
+    handleShield(params, player) {
+        let targets = [];
+        
+        if (params.length > 0) {
+            const target = params[0].toLowerCase();
+            if (target === 'all') {
+                targets = this.game.players.filter(p => p.alive);
+            } else if (target === 'others') {
+                targets = this.game.players.filter(p => p.alive && p !== player);
+            } else {
+                const targetId = parseInt(params[0]);
+                const foundPlayer = this.game.players.find(p => p.sid === targetId && p.alive);
+                if (!foundPlayer) {
+                    return { success: false, message: 'Player not found' };
+                }
+                targets = [foundPlayer];
+            }
+        } else {
+            targets = [player];
+        }
+
+        // Toggle shield for targets
+        targets.forEach(target => {
+            target.hasShield = !target.hasShield;
+            target.sentTo = {}; // Force resync to client
+            const status = target.hasShield ? 'enabled' : 'disabled';
+            target.send('6', -1, `Shield ${status}`);
+        });
+
+        const shieldCount = targets.filter(t => t.hasShield).length;
+        return { success: true, message: `Shield toggled for ${targets.length} player(s) (${shieldCount} now protected)` };
     }
 }

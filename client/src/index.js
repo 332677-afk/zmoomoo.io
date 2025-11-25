@@ -2008,7 +2008,7 @@ function updateStatusDisplay() {
 }
 
 var iconSprites = {};
-var icons = ["crown", "skull"];
+var icons = ["crown", "skull", "shield"];
 
 function loadIcons() {
     for (var i = 0; i < icons.length; ++i) {
@@ -2379,6 +2379,15 @@ function updateGame() {
                             mainContext.strokeText(idText, tmpObj.x - xOffset, idY);
                             mainContext.fillStyle = "#ff0000";
                             mainContext.fillText(idText, tmpObj.x - xOffset, idY);
+                        }
+                        // Shield icon if player has shield
+                        if (tmpObj.hasShield && iconSprites["shield"]) {
+                            var tmpS = config.crownIconScale;
+                            var tmpX = tmpObj.x - xOffset - (tmpS / 2) - (mainContext.measureText(tmpText).width / 2) - config.crownPad - tmpS - 5;
+                            if (iconSprites["shield"].isLoaded) {
+                                mainContext.drawImage(iconSprites["shield"], tmpX, (tmpObj.y - yOffset - tmpObj.scale) -
+                                    config.nameY - (tmpS / 2) - 5, tmpS, tmpS);
+                            }
                         }
                         if (tmpObj.isLeader && iconSprites["crown"].isLoaded) {
                             var tmpS = config.crownIconScale;

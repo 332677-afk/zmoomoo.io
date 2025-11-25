@@ -64,6 +64,14 @@ export class GameObject {
 
         // GET HIT:
         this.changeHealth = function(amount, doer) {
+            // Shield blocks damage and sends "invincible" text
+            if (this.hasShield && amount < 0) {
+                // Send "invincible" damage text to doer if it's a player
+                if (doer && doer.send) {
+                    doer.send('6', 100, 'invincible');
+                }
+                return false; // No damage dealt
+            }
             this.health += amount;
             return this.health <= 0;
         };

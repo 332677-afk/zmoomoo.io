@@ -136,6 +136,7 @@ export class Player {
             this.packetCounter = 0;
             this.packetWindowStart = Date.now();
             this.gameMode = 0;
+            this.hasShield = false;
 
             const spawn = objectManager.fetchSpawnObj(this.sid);
 
@@ -259,7 +260,7 @@ export class Player {
 
         // GET DATA TO SEND:
         this.getData = function() {
-            return [this.id, this.sid, this.name, UTILS.fixTo(this.x, 2), UTILS.fixTo(this.y, 2), UTILS.fixTo(this.dir, 3), this.health, this.maxHealth, this.scale, this.skinColor, this.isAdmin ? 1 : 0];
+            return [this.id, this.sid, this.name, UTILS.fixTo(this.x, 2), UTILS.fixTo(this.y, 2), UTILS.fixTo(this.dir, 3), this.health, this.maxHealth, this.scale, this.skinColor, this.isAdmin ? 1 : 0, this.hasShield ? 1 : 0];
         };
 
         this.getInfo = function() {
