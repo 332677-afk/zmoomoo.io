@@ -520,13 +520,42 @@ export class AdminCommands {
 
     handleWeaponVariant(params, player) {
         if (params.length < 1) {
-            return { success: false, message: 'Usage: /weaponvariant [variant: 2=gold, 3=diamond, 4=ruby, 5=emerald] [optional: all|player_id|others] (default: self)' };
+            return { success: false, message: 'Usage: /weaponvariant [2-5|remove] [optional: all|player_id|others] (default: self)' };
         }
         
+        // Handle variant removal
+        if (params[0].toLowerCase() === 'remove' || params[0].toLowerCase() === 'reset') {
+            let targets;
+            if (params.length < 2) {
+                targets = [player];
+            } else {
+                targets = this.getTargetPlayer(params[1], player);
+            }
+            
+            if (targets.length === 0) {
+                return { success: false, message: 'Player not found' };
+            }
+            
+            const variant = 0; // Normal/default variant
+            targets.forEach(target => {
+                target.weaponVariant = variant;
+                target.weaponXP[target.weaponIndex] = 0;
+                // Send to all players who can see this player
+                for (let i = 0; i < this.game.players.length; ++i) {
+                    if (this.game.players[i].sentTo[target.id]) {
+                        this.game.players[i].send('W', target.sid, variant);
+                    }
+                }
+            });
+            
+            return { success: true, message: `Removed weapon variant for ${targets.length} player(s)` };
+        }
+        
+        // Handle variant setting (2-5)
         let inputVariant = parseInt(params[0]);
         
         if (!Number.isFinite(inputVariant) || inputVariant < 2 || inputVariant > 5) {
-            return { success: false, message: 'Variant must be 2-5 (2=gold, 3=diamond, 4=ruby, 5=emerald)' };
+            return { success: false, message: 'Variant must be 2-5 (2=gold, 3=diamond, 4=ruby, 5=emerald) or "remove"' };
         }
         
         // Map user input (2-5) to actual variant indices (1-4)
