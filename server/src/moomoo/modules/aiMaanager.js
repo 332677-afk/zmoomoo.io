@@ -71,6 +71,7 @@ export class AiManager {
             id: 5,
             name: "Quack",
             src: "chicken_1",
+            hostile: true,
             dmg: 8,
             killScore: 2000,
             noTrap: true,
