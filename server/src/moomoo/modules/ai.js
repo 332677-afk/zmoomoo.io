@@ -23,6 +23,8 @@ export class AI {
             }
             this.weightM = data.weightM;
             this.speed = data.speed;
+            this.fleeSpeed = data.fleeSpeed || data.speed * 1.42;
+            this.chargeSpeed = data.chargeSpeed || data.speed * 1.75;
             this.killScore = data.killScore;
             this.turnSpeed = data.turnSpeed;
             this.scale = data.scale;
@@ -126,11 +128,11 @@ export class AI {
                             var tmpSpd = this.speed * slowMlt;
                             if (this.runFrom && this.runFrom.active && !(this.runFrom.isPlayer && !this.runFrom.alive)) {
                                 this.targetDir = UTILS.getDirection(this.x, this.y, this.runFrom.x, this.runFrom.y);
-                                tmpSpd *= 1.42;
+                                tmpSpd = this.fleeSpeed * slowMlt;
                             } else {
                                 if (this.chargeTarget && this.chargeTarget.alive) {
                                     this.targetDir = UTILS.getDirection(this.chargeTarget.x, this.chargeTarget.y, this.x, this.y);
-                                    tmpSpd *= 1.75;
+                                    tmpSpd = this.chargeSpeed * slowMlt;
                                     charging = true;
                                 }
                             }

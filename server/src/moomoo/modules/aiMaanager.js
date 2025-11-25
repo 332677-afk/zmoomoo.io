@@ -198,7 +198,9 @@ export class AiManager {
             killScore: 200,
             health: 800,
             weightM: 0.6,
-            speed: 0.0015,
+            speed: 0.001,
+            fleeSpeed: 0.001310,
+            chargeSpeed: 0.0015900,
             turnSpeed: 0.001,
             scale: 72,
             drop: ["food", 100, "gold", 400]
