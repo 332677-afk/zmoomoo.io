@@ -583,6 +583,9 @@ export class Player {
         // CHANGE HEALTH:
         this.changeHealth = function(amount, doer) {
             if (this.isInvincible && amount < 0) {
+                if (doer && doer.canSee(this)) {
+                    doer.send("IX", Math.round(this.x), Math.round(this.y));
+                }
                 return false;
             }
             if (amount > 0 && this.health >= this.maxHealth) {

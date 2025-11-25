@@ -1242,6 +1242,7 @@ export class AdminCommands {
         
         targets.forEach(target => {
             target.isInvincible = !target.isInvincible;
+            this.game.server.broadcast('IU', target.sid, target.isInvincible ? 1 : 0);
         });
         
         return { success: true, message: `Toggled invincibility for ${targets.length} player(s)` };

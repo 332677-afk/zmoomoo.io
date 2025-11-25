@@ -137,7 +137,9 @@ function connectSocket() {
         "0": pingSocketResponse,
         "ADMIN_LOGIN": adminLoginShowPlayers,
         "SHOW_IDS": showIDsOnScreen,
-        "SHOW_WARNING": showWarning
+        "SHOW_WARNING": showWarning,
+        "IX": showInvincibleText,
+        "IU": updateInvincibleStatus
     });
 }
 
@@ -1825,6 +1827,17 @@ function showText(x, y, value, type) {
     textManager.showText(x, y, 50, 0.18, 500, Math.abs(value), (value < 0) ? "#fff" : "#8ecc51");
 }
 
+function showInvincibleText(x, y) {
+    textManager.showText(x, y, 50, 0.18, 500, "INVINCIBLE", "#fff");
+}
+
+function updateInvincibleStatus(sid, isInvincible) {
+    var tmpPlayer = findPlayerBySID(sid);
+    if (tmpPlayer) {
+        tmpPlayer.isInvincible = isInvincible ? true : false;
+    }
+}
+
 function adminLoginShowPlayers(allPlayers) {
     try {
         console.log("Admin Login - Players received:", allPlayers);
@@ -2393,7 +2406,7 @@ function updateGame() {
                         }
                         if (tmpObj.isInvincible && iconSprites["shield"].isLoaded) {
                             var tmpS = config.crownIconScale;
-                            var tmpX = tmpObj.x - xOffset - (tmpS / 2) + (mainContext.measureText(tmpText).width / 2) + config.crownPad;
+                            var tmpX = tmpObj.x - xOffset - (tmpS / 2) - (mainContext.measureText(tmpText).width / 2) - config.crownPad;
                             mainContext.drawImage(iconSprites["shield"], tmpX, (tmpObj.y - yOffset - tmpObj.scale) - config.nameY - (tmpS / 2) - 5, tmpS, tmpS);
                         }
                     }
