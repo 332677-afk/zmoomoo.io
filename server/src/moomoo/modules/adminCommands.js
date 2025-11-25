@@ -551,12 +551,15 @@ export class AdminCommands {
         
         let addedCount = 0;
         targets.forEach(target => {
-            if (!Array.isArray(target.weapons)) {
-                target.weapons = [0];
+            // Weapons are stored as object: {type: weaponId}
+            // type 0 = melee, type 1 = ranged
+            if (typeof target.weapons !== 'object') {
+                target.weapons = {};
             }
             
-            if (!target.weapons.includes(weapon.id)) {
-                target.weapons.push(weapon.id);
+            // Only set weapon if player doesn't already have one of this type
+            if (!target.weapons[weapon.type]) {
+                target.weapons[weapon.type] = weapon.id;
                 addedCount++;
             }
         });
@@ -592,14 +595,10 @@ export class AdminCommands {
         
         let removedCount = 0;
         targets.forEach(target => {
-            const index = target.weapons.indexOf(weapon.id);
-            if (index > -1) {
-                target.weapons.splice(index, 1);
+            // Weapons are stored as object: {type: weaponId}
+            if (target.weapons && target.weapons[weapon.type]) {
+                delete target.weapons[weapon.type];
                 removedCount++;
-                // If the removed weapon was selected, switch to first weapon
-                if (target.weaponIndex === index && target.weapons.length > 0) {
-                    target.weaponIndex = 0;
-                }
             }
         });
         
