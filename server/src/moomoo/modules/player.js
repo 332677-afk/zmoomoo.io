@@ -282,7 +282,7 @@ export class Player {
                 Number.isFinite(this.clientPing) ? Math.max(-1, Math.round(this.clientPing)) : -1,
                 this.isAdmin ? 1 : 0,
                 this.hasShield ? 1 : 0,
-                this.isLeader ? 1 : 0
+                this.is_owner ? 1 : 0
             ];
         };
 

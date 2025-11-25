@@ -3417,6 +3417,7 @@ function updatePlayers(data) {
             tmpObj.weaponIndex = data[i + 5];
             tmpObj.weaponVariant = data[i + 6];
             tmpObj.team = data[i + 7];
+            tmpObj.isLeader = data[i + 8] ? true : false;
             tmpObj.skinIndex = data[i + 9];
             tmpObj.tailIndex = data[i + 10];
             tmpObj.iconIndex = data[i + 11];
@@ -3425,10 +3426,9 @@ function updatePlayers(data) {
             tmpObj.ping = typeof data[i + 14] === "number" ? Math.max(-1, Math.round(data[i + 14])) : -1;
             tmpObj.isAdmin = data[i + 15] ? true : false;
             tmpObj.hasShield = data[i + 16] ? true : false;
-            tmpObj.isLeader = data[i + 17] ? true : false;
             tmpObj.visible = true;
         }
-        i += 18;
+        i += 17;
     }
 }
 

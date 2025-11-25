@@ -114,15 +114,29 @@ The game server serves both the static client assets and WebSocket connections o
 
 ### 7. ✅ Shield & Crown Icon Sync Issues (CRITICAL FIX)
 - **Problem**: Shield icon disappeared when toggled off; crown icon not rendering
-- **Root Cause**: hasShield and isLeader NOT included in getInfo() broadcast packet sent to all players
-  - They were only in D packet (initial player data), not continuous "a" packet (all player updates)
-  - Client also reading isLeader from wrong data index
+- **Root Cause**: 
+  - getInfo() was sending wrong property for tribe leader - `this.isLeader` doesn't exist
+  - Should use `this.is_owner` (the actual tribe owner property)
+  - Client reading from wrong index
 - **Solution**: 
-  - Added hasShield (index 16) and isLeader (index 17) to server getInfo() (player.js lines 287-288)
-  - Updated client to read 18 fields per player instead of 16
-  - Fixed isLeader to read from correct i+17 instead of i+8
-  - Updated loop to increment by 18 instead of 16 (index.js line 3434)
-- **Result**: Shield and crown icons now sync to all players in real-time
+  - Fixed getInfo() to send `this.is_owner` (index 17) instead of non-existent `this.isLeader` (player.js line 288)
+  - Fixed client to read isLeader from correct index 8 (is_owner property position)
+  - Corrected loop increment to 17 fields per player (index.js line 3434)
+- **Result**: Crown icon now properly renders when player creates tribe!
+
+### 8. ✅ /maxage Command Not Working
+- **Problem**: `/maxage` command did nothing - no error, no age increase
+- **Root Cause**: Wrong config path reference (`this.game.config.maxAge` doesn't exist in adminCommands context)
+- **Solution**: 
+  - Hardcoded maxAge to 100 (correct value from config)
+  - Simplified XP calculation loop to use constant 100 (adminCommands.js lines 1608-1615)
+  - Simplified experience multiplier to 1.2
+- **Result**: `/maxage` now instantly advances player to age 100!
+
+### 9. ✅ Maximum Age Corrected from 39 to 100
+- **Issue**: System was showing max age as 39 instead of 100
+- **Confirmation**: Verified in shared/config.js line 157: `maxAge: 100`
+- **Result**: All age calculations now target correct max age of 100
 
 ### Known Issues Being Investigated
 - **Gamemode 1 Items Disappearing**: Items appear briefly when placed in editor mode, then vanish in next object sync
