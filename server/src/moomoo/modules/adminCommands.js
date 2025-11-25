@@ -463,11 +463,7 @@ export class AdminCommands {
         
         targets.forEach(target => {
             target.weaponVariant = variant;
-            for (let i = 0; i < this.game.players.length; ++i) {
-                if (this.game.players[i].sentTo[target.id]) {
-                    this.game.players[i].send('W', target.sid, variant);
-                }
-            }
+            this.game.server.broadcast('W', target.sid, variant);
         });
         
         return { success: true, message: `Set weapon variant to ${variant} for ${targets.length} player(s)` };
@@ -1181,22 +1177,25 @@ export class AdminCommands {
     }
 
     handlePolice(params, player) {
-        // Bumble cap = 18, Snow cap = 19
-        const policeHats = [18, 19];
+        // Bummle Hat = 8, Winter Cap = 15
+        const policeHats = [8, 15];
         
         if (player.policeInterval) {
             clearInterval(player.policeInterval);
             player.policeInterval = null;
             player.skinIndex = 0;
+            player.send('N', 'policeMode', 0);
             return { success: true, message: 'Police mode disabled' };
         }
         
         let index = 0;
         
         player.policeInterval = setInterval(() => {
-            const hatId = policeHats[index % policeHats.length];
-            player.skinIndex = hatId;
-            index++;
+            if (player.alive) {
+                const hatId = policeHats[index % policeHats.length];
+                player.skinIndex = hatId;
+                index++;
+            }
         }, 500);
         
         return { success: true, message: 'Police mode activated - run /police again to disable' };
