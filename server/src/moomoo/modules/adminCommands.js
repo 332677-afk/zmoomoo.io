@@ -355,17 +355,33 @@ export class AdminCommands {
     }
 
     handleSet(params, player) {
-        if (params.length < 3) {
-            return { success: false, message: 'Usage: /set [player ID] [attribute] [value]' };
+        if (params.length < 2) {
+            return { success: false, message: 'Usage: /set [attribute] [value] or /set [player ID] [attribute] [value]' };
         }
         
-        const targets = this.getTargetPlayer(params[0]);
-        const attribute = params[1].toLowerCase();
-        const value = params[2] === 'normal' ? null : parseFloat(params[2]);
+        // Determine if first param is player ID or attribute
+        let targets = [];
+        let attributeIndex = 0;
+        let valueIndex = 1;
+        
+        // Try to parse first param as player ID
+        const firstAsId = parseInt(params[0]);
+        if (Number.isFinite(firstAsId) && params.length >= 3) {
+            // Format: /set [player ID] [attribute] [value]
+            targets = this.getTargetPlayer(params[0]);
+            attributeIndex = 1;
+            valueIndex = 2;
+        } else {
+            // Format: /set [attribute] [value] - apply to self
+            targets = [player];
+        }
         
         if (targets.length === 0) {
             return { success: false, message: 'Player not found' };
         }
+        
+        const attribute = params[attributeIndex].toLowerCase();
+        const value = params[valueIndex] === 'normal' ? null : parseFloat(params[valueIndex]);
         
         targets.forEach(target => {
             switch (attribute) {
@@ -387,16 +403,17 @@ export class AdminCommands {
                     target.addResource(3, value - (target.items[3] || 0), true);
                     break;
                 case 'kills':
-                    target.kills = value;
+                    target.kills = parseInt(value);
+                    target.send('N', 'kills', target.kills, 1);
                     break;
                 case 'xp':
                     target.XP = value;
                     break;
                 case 'damage':
-                    const damageResult = this.setCustomDamage(target, value);
-                    if (!damageResult.success) {
-                        throw new Error(damageResult.error);
-                    }
+                    target.customDamage = value > 0 ? value : 0;
+                    break;
+                case 'weaponspeed':
+                    target.weaponSpeed = value;
                     break;
             }
         });
@@ -1135,7 +1152,7 @@ export class AdminCommands {
         let targetName = 'you';
         
         if (playerId !== null) {
-            const targetPlayer = this.game.players.find(p => p.id === playerId);
+            const targetPlayer = this.game.players.find(p => p.sid === playerId);
             if (!targetPlayer) {
                 return { success: false, message: 'Player not found' };
             }
