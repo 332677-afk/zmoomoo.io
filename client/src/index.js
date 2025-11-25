@@ -1690,6 +1690,15 @@ function keysActive() {
 
 function keyDown(event) {
     var keyNum = getKeyCode(event);
+    
+    // Anti-spacebar scroll: prevent default spacebar behavior when not in input/textarea
+    if (keyNum == 32) {
+        const element = document.activeElement;
+        if (!["TEXTAREA", "INPUT"].includes(element.tagName)) {
+            event.preventDefault();
+        }
+    }
+    
     if (keyNum == 27) {
         hideAllWindows();
     } else if (player && player.alive && keysActive()) {
