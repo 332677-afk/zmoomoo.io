@@ -1571,10 +1571,16 @@ export class AdminCommands {
                 for (let i = 0; i < items.list.length; i++) {
                     target.items.push(items.list[i].id);
                 }
-                // Unlock all weapons - map by type
-                target.weapons = {};
+                // Unlock all weapons - keep as array with indices for weapons
+                if (!Array.isArray(target.weapons)) {
+                    target.weapons = [];
+                }
                 for (let i = 0; i < items.weapons.length; i++) {
-                    target.weapons[items.weapons[i].type] = items.weapons[i].id;
+                    // Ensure array is large enough
+                    while (target.weapons.length <= i) {
+                        target.weapons.push(undefined);
+                    }
+                    target.weapons[i] = items.weapons[i].id;
                 }
                 // Unlock all accessories
                 for (let i = 0; i < hats.length; i++) {

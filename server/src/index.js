@@ -299,7 +299,10 @@ wss.on("connection", async (socket, req) => {
                     }
 
                     if (player.buildIndex === data[0]) {
-                        player.buildIndex = -1;
+                        // Editor mode: don't deselect building
+                        if (player.gameMode !== 1) {
+                            player.buildIndex = -1;
+                        }
                         player.mouseState = 0;
                         break;
                     }
