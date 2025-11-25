@@ -2297,8 +2297,8 @@ function updateGame() {
                         mainContext.strokeText(tmpText, tmpObj.x - xOffset, (tmpObj.y - yOffset - tmpObj.scale) - config.nameY);
                         mainContext.fillText(tmpText, tmpObj.x - xOffset, (tmpObj.y - yOffset - tmpObj.scale) - config.nameY);
                         
-                        // Render player ID above name for admins
-                        if (player && player.isAdmin && tmpObj.sid !== undefined) {
+                        // Render player ID above name for admins (only for players, not animals)
+                        if (player && player.isAdmin && tmpObj.sid !== undefined && tmpObj.weaponIndex !== undefined) {
                             var idText = "ID: " + tmpObj.sid;
                             mainContext.font = "24px Hammersmith One";
                             mainContext.fillStyle = "#ff0000";

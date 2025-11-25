@@ -57,6 +57,7 @@ module.exports = function (id, sid, config, UTILS, projectileManager,
         this.mouseState = 0;
         this.buildIndex = -1;
         this.weaponIndex = 0;
+        this.weaponVariant = 0;
         this.dmgOverTime = {};
         this.noMovTimer = 0;
         this.maxXP = config.experience ? config.experience.initialXP : 300;

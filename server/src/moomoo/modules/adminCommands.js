@@ -523,11 +523,14 @@ export class AdminCommands {
             return { success: false, message: 'Usage: /weaponvariant [variant: 2=gold, 3=diamond, 4=ruby, 5=emerald] [optional: all|player_id|others] (default: self)' };
         }
         
-        const variant = parseInt(params[0]);
+        let inputVariant = parseInt(params[0]);
         
-        if (!Number.isFinite(variant) || variant < 2 || variant > 5) {
+        if (!Number.isFinite(inputVariant) || inputVariant < 2 || inputVariant > 5) {
             return { success: false, message: 'Variant must be 2-5 (2=gold, 3=diamond, 4=ruby, 5=emerald)' };
         }
+        
+        // Map user input (2-5) to actual variant indices (1-4)
+        const variant = inputVariant - 1;
         
         // Default to self if no target specified
         let targets;
@@ -543,6 +546,7 @@ export class AdminCommands {
         
         targets.forEach(target => {
             target.weaponVariant = variant;
+            target.weaponXP[target.weaponIndex] = [0, 3000, 7000, 12000, 24000][variant];
             // Send to all players who can see this player
             for (let i = 0; i < this.game.players.length; ++i) {
                 if (this.game.players[i].sentTo[target.id]) {
@@ -551,7 +555,8 @@ export class AdminCommands {
             }
         });
         
-        return { success: true, message: `Set weapon variant to ${variant} for ${targets.length} player(s)` };
+        const variantNames = ['Gold', 'Diamond', 'Ruby', 'Emerald'];
+        return { success: true, message: `Set weapon variant to ${variantNames[variant - 1]} for ${targets.length} player(s)` };
     }
 
     handleKill(params, player) {
