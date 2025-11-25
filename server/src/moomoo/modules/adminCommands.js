@@ -447,7 +447,7 @@ export class AdminCommands {
 
     handleWeaponVariant(params, player) {
         if (params.length < 2) {
-            return { success: false, message: 'Usage: /weaponvariant [player ID] [2=gold|3=diamond|4=ruby|5=emerald]' };
+            return { success: false, message: 'Usage: /weaponvariant [player ID] [variant: 0=normal, 2=gold, 3=diamond, 4=ruby, 5=emerald]' };
         }
         
         const targets = this.getTargetPlayer(params[0]);
@@ -458,13 +458,16 @@ export class AdminCommands {
         }
         
         if (!Number.isFinite(variant) || variant < 0 || variant > 5) {
-            return { success: false, message: 'Variant must be 0-5 (0=normal, 2=gold, 3=diamond, 4=ruby, 5=emerald)' };
+            return { success: false, message: 'Variant must be 0-5' };
         }
         
         targets.forEach(target => {
             target.weaponVariant = variant;
+            // Send to all players who can see this player
             for (let i = 0; i < this.game.players.length; ++i) {
-                this.game.players[i].send('W', target.sid, variant);
+                if (this.game.players[i].sentTo[target.id]) {
+                    this.game.players[i].send('W', target.sid, variant);
+                }
             }
         });
         
@@ -1094,24 +1097,30 @@ export class AdminCommands {
 
     handleSpawn(params, player) {
         if (params.length < 2) {
-            return { success: false, message: 'Usage: /spawn [animal|boss] [amount]' };
+            return { success: false, message: 'Usage: /spawn [animal type] [amount]' };
         }
         
         const type = params[0].toLowerCase();
         const amount = parseInt(params[1]);
         
+        if (!Number.isFinite(amount) || amount < 1) {
+            return { success: false, message: 'Amount must be a positive number' };
+        }
+        
         for (let i = 0; i < amount; i++) {
-            const x = player.x + (Math.random() - 0.5) * 500;
-            const y = player.y + (Math.random() - 0.5) * 500;
+            const x = player.x + (Math.random() - 0.5) * 100;
+            const y = player.y + (Math.random() - 0.5) * 100;
             
             if (['moofie', 'moostafa', 'vince', 'sid'].includes(type)) {
                 this.game.ai_manager.addAI(x, y, type, true);
             } else if (['wolf', 'bull', 'bully'].includes(type)) {
                 this.game.ai_manager.addAI(x, y, type, false);
+            } else {
+                return { success: false, message: `Unknown animal type: ${type}` };
             }
         }
         
-        return { success: true, message: `Spawned ${amount} ${type}(s)` };
+        return { success: true, message: `Spawned ${amount} ${type}(s) on you` };
     }
 
     handleReport(params, player) {
