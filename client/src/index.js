@@ -2381,13 +2381,11 @@ function updateGame() {
                             mainContext.fillText(idText, tmpObj.x - xOffset, idY);
                         }
                         // Shield icon if player has shield
-                        if (tmpObj.hasShield && iconSprites["shield"]) {
+                        if (tmpObj.hasShield && iconSprites["shield"] && iconSprites["shield"].isLoaded) {
                             var tmpS = config.crownIconScale;
                             var tmpX = tmpObj.x - xOffset - (tmpS / 2) - (mainContext.measureText(tmpText).width / 2) - config.crownPad - tmpS - 5;
-                            if (iconSprites["shield"].isLoaded) {
-                                mainContext.drawImage(iconSprites["shield"], tmpX, (tmpObj.y - yOffset - tmpObj.scale) -
-                                    config.nameY - (tmpS / 2) - 5, tmpS, tmpS);
-                            }
+                            mainContext.drawImage(iconSprites["shield"], tmpX, (tmpObj.y - yOffset - tmpObj.scale) -
+                                config.nameY - (tmpS / 2) - 5, tmpS, tmpS);
                         }
                         if (tmpObj.isLeader && iconSprites["crown"].isLoaded) {
                             var tmpS = config.crownIconScale;
