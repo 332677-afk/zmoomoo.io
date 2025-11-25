@@ -71,8 +71,6 @@ export class AiManager {
             id: 5,
             name: "Quack",
             src: "chicken_1",
-            hostile: true,
-            dmg: 8,
             killScore: 2000,
             noTrap: true,
             health: 300,
@@ -80,8 +78,6 @@ export class AiManager {
             speed: 0.0018,
             turnSpeed: 0.006,
             scale: 70,
-            viewRange: 800,
-            chargePlayer: true,
             drop: ["food", 100]
         }, {
             id: 6,
