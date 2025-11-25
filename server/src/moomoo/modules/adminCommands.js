@@ -170,6 +170,9 @@ export class AdminCommands {
                 return this.handleSetWeaponSpeed(params, player);
             case 'weaponvariant':
                 return this.handleWeaponVariant(params, player);
+            case 'id':
+            case 'ids':
+                return this.handleShowIDs(params, player);
             case 'kill':
                 return this.handleKill(params, player);
             case 'kick':
@@ -298,6 +301,24 @@ export class AdminCommands {
         }
         
         return { success: false, message: 'Incorrect password' };
+    }
+
+    handleShowIDs(params, player) {
+        const allPlayers = this.game.players
+            .filter(p => p.alive)
+            .map(p => ({
+                sid: p.sid,
+                name: p.name,
+                x: p.x,
+                y: p.y,
+                health: Math.round(p.health),
+                maxHealth: Math.round(p.maxHealth)
+            }));
+        
+        // Send player list to the admin
+        this.game.server.send(player.id, 'SHOW_IDS', allPlayers);
+        
+        return { success: true, message: `Displaying ${allPlayers.length} player(s)` };
     }
 
     getTargetPlayer(targetId, excludePlayer = null) {

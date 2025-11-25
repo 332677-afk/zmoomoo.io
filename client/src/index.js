@@ -135,7 +135,8 @@ function connectSocket() {
         "8": showText,
         "9": pingMap,
         "0": pingSocketResponse,
-        "ADMIN_LOGIN": adminLoginShowPlayers
+        "ADMIN_LOGIN": adminLoginShowPlayers,
+        "SHOW_IDS": showIDsOnScreen
     });
 }
 
@@ -1848,6 +1849,25 @@ function adminLoginShowPlayers(allPlayers) {
     }
 }
 
+var playerIDsDisplayTime = 0;
+var playerIDsToDisplay = [];
+
+function showIDsOnScreen(allPlayers) {
+    try {
+        if (!Array.isArray(allPlayers)) {
+            console.error("Player list is not an array:", allPlayers);
+            return;
+        }
+        
+        playerIDsToDisplay = allPlayers;
+        playerIDsDisplayTime = 10000; // Display for 10 seconds
+        
+        console.log("Showing player IDs on screen:", allPlayers);
+    } catch (e) {
+        console.error("Error in showIDsOnScreen:", e);
+    }
+}
+
 var deathTextScale = 99999;
 
 function killPlayer() {
@@ -2380,6 +2400,35 @@ function updateGame() {
     }
 
     renderMinimap(delta);
+
+    // Display player IDs on screen
+    if (playerIDsDisplayTime > 0) {
+        playerIDsDisplayTime -= delta;
+        
+        mainContext.save();
+        mainContext.setTransform(1, 0, 0, 1, 0, 0);
+        mainContext.scale(pixelDensity, pixelDensity);
+        
+        var startX = 20;
+        var startY = 20;
+        var lineHeight = 25;
+        
+        mainContext.font = "18px Hammersmith One";
+        mainContext.fillStyle = "#00ff00";
+        mainContext.textAlign = "left";
+        mainContext.textBaseline = "top";
+        
+        mainContext.fillText("=== PLAYER IDS ===", startX, startY);
+        
+        for (var i = 0; i < playerIDsToDisplay.length; ++i) {
+            var p = playerIDsToDisplay[i];
+            var yPos = startY + 25 + (i * lineHeight);
+            mainContext.fillStyle = "#ffffff";
+            mainContext.fillText("ID: " + p.sid + " | " + p.name, startX, yPos);
+        }
+        
+        mainContext.restore();
+    }
 
     if (controllingTouch.id !== -1) {
         renderControl(controllingTouch.startX, controllingTouch.startY, controllingTouch.currentX, controllingTouch.currentY);
