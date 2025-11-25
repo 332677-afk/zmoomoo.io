@@ -403,17 +403,19 @@ export class AdminCommands {
                     target.addResource(3, value - (target.items[3] || 0), true);
                     break;
                 case 'kills':
-                    target.kills = parseInt(value);
+                    target.kills = Math.max(0, parseInt(value));
                     target.send('N', 'kills', target.kills, 1);
                     break;
                 case 'xp':
                     target.XP = value;
                     break;
                 case 'damage':
-                    target.customDamage = value > 0 ? value : 0;
+                    target.customDamage = value > 0 ? value : 1;
                     break;
                 case 'weaponspeed':
-                    target.weaponSpeed = value;
+                case 'speed':
+                    // Higher value = faster reload/attack. weaponSpeed is a multiplier where > 1 speeds up
+                    target.weaponSpeed = Math.max(0.1, parseFloat(value));
                     break;
             }
         });

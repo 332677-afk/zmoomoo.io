@@ -1,0 +1,23 @@
+2025-11-24 22:05:05.72
+{message: "Cannot read properties of undefined (reading 'length')", stack: "TypeError: Cannot read properties of undefined (reading 'length') at ht (https://ad9720fd-3215-461b-b6c4-64754ba00f1a-00-4zvaf9083lyc.kirk.replit.dev/assets/bundle.js:33:16611) at onmouseover (https://ad9720fd-3215-461b-b6c4-64754ba00f1a-00-4zvaf9083lyc.kirk.replit.dev/assets/bundle.js:33:20605) at HTMLDivElement.<anonymous> (https://ad9720fd-3215-461b-b6c4-64754ba00f1a-00-4zvaf9083lyc.kirk.replit.dev/assets/bundle.js:33:71618)"}
+2025-11-24 22:05:05.72
+{message: "Cannot read properties of undefined (reading 'length')", stack: "TypeError: Cannot read properties of undefined (reading 'length') at ht (https://ad9720fd-3215-461b-b6c4-64754ba00f1a-00-4zvaf9083lyc.kirk.replit.dev/assets/bundle.js:33:16611) at onmouseover (https://ad9720fd-3215-461b-b6c4-64754ba00f1a-00-4zvaf9083lyc.kirk.replit.dev/assets/bundle.js:33:20605) at HTMLDivElement.<anonymous> (https://ad9720fd-3215-461b-b6c4-64754ba00f1a-00-4zvaf9083lyc.kirk.replit.dev/assets/bundle.js:33:71618)"}
+2025-11-24 22:05:05.72
+{message: "Cannot read properties of undefined (reading 'length')", stack: "TypeError: Cannot read properties of undefined (reading 'length') at ht (https://ad9720fd-3215-461b-b6c4-64754ba00f1a-00-4zvaf9083lyc.kirk.replit.dev/assets/bundle.js:33:16611) at onmouseover (https://ad9720fd-3215-461b-b6c4-64754ba00f1a-00-4zvaf9083lyc.kirk.replit.dev/assets/bundle.js:33:20605) at HTMLDivElement.<anonymous> (https://ad9720fd-3215-461b-b6c4-64754ba00f1a-00-4zvaf9083lyc.kirk.replit.dev/assets/bundle.js:33:71618)"}
+2025-11-24 22:05:05.72
+{message: "Cannot read properties of undefined (reading 'length')", stack: "TypeError: Cannot read properties of undefined (reading 'length') at ht (https://ad9720fd-3215-461b-b6c4-64754ba00f1a-00-4zvaf9083lyc.kirk.replit.dev/assets/bundle.js:33:16611) at onmouseover (https://ad9720fd-3215-461b-b6c4-64754ba00f1a-00-4zvaf9083lyc.kirk.replit.dev/assets/bundle.js:33:20605) at HTMLDivElement.<anonymous> (https://ad9720fd-3215-461b-b6c4-64754ba00f1a-00-4zvaf9083lyc.kirk.replit.dev/assets/bundle.js:33:71618)"}
+2025-11-24 22:05:05.72
+{message: "Cannot read properties of undefined (reading 'length')", stack: "TypeError: Cannot read properties of undefined (reading 'length') at ht (https://ad9720fd-3215-461b-b6c4-64754ba00f1a-00-4zvaf9083lyc.kirk.replit.dev/assets/bundle.js:33:16611) at onmouseover (https://ad9720fd-3215-461b-b6c4-64754ba00f1a-00-4zvaf9083lyc.kirk.replit.dev/assets/bundle.js:33:20605) at HTMLDivElement.<anonymous> (https://ad9720fd-3215-461b-b6c4-64754ba00f1a-00-4zvaf9083lyc.kirk.replit.dev/assets/bundle.js:33:71618)"}
+2025-11-24 22:05:05.85
+{message: "Cannot read properties of undefined (reading 'length')", stack: "TypeError: Cannot read properties of undefined (reading 'length') at ht (https://ad9720fd-3215-461b-b6c4-64754ba00f1a-00-4zvaf9083lyc.kirk.replit.dev/assets/bundle.js:33:16611) at onmouseover (https://ad9720fd-3215-461b-b6c4-64754ba00f1a-00-4zvaf9083lyc.kirk.replit.dev/assets/bundle.js:33:20605) at HTMLDivElement.<anonymous> (https://ad9720fd-3215-461b-b6c4-64754ba00f1a-00-4zvaf9083lyc.kirk.replit.dev/assets/bundle.js:33:71618)"}
+2025-11-24 22:05:06.06
+{message: "Cannot read properties of undefined (reading 'length')", stack: "TypeError: Cannot read properties of undefined (reading 'length') at ht (https://ad9720fd-3215-461b-b6c4-64754ba00f1a-00-4zvaf9083lyc.kirk.replit.dev/assets/bundle.js:33:16611) at onmouseover (https://ad9720fd-3215-461b-b6c4-64754ba00f1a-00-4zvaf9083lyc.kirk.replit.dev/assets/bundle.js:33:20605) at HTMLDivElement.<anonymous> (https://ad9720fd-3215-461b-b6c4-64754ba00f1a-00-4zvaf9083lyc.kirk.replit.dev/assets/bundle.js:33:71618)"}
+2025-11-24 22:07:36.88
+Attempted to send packet before socket was ready:
+0
+2025-11-24 22:07:36.88
+Attempted to send packet before socket was ready:
+9
+2025-11-24 22:07:36.88
+Attempted to send packet before socket was ready:
+D
