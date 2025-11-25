@@ -304,6 +304,14 @@ export class AdminCommands {
     }
 
     handleShowIDs(params, player) {
+        const mode = params[0] ? params[0].toLowerCase() : 'normal';
+        
+        // Handle disable mode
+        if (mode === 'disable') {
+            this.game.server.send(player.id, 'SHOW_IDS', { action: 'disable' });
+            return { success: true, message: 'Player IDs display disabled' };
+        }
+        
         const allPlayers = this.game.players
             .filter(p => p.alive)
             .map(p => ({
@@ -315,10 +323,19 @@ export class AdminCommands {
                 maxHealth: Math.round(p.maxHealth)
             }));
         
-        // Send player list to the admin
-        this.game.server.send(player.id, 'SHOW_IDS', allPlayers);
+        // Determine display mode
+        const isToggle = mode === 'toggle';
         
-        return { success: true, message: `Displaying ${allPlayers.length} player(s)` };
+        // Send player list to the admin with mode info
+        const payload = {
+            action: isToggle ? 'toggle' : 'normal',
+            players: allPlayers
+        };
+        
+        this.game.server.send(player.id, 'SHOW_IDS', payload);
+        
+        const displayMode = isToggle ? 'permanently' : 'for 10 seconds';
+        return { success: true, message: `Displaying ${allPlayers.length} player(s) ${displayMode}` };
     }
 
     getTargetPlayer(targetId, excludePlayer = null) {

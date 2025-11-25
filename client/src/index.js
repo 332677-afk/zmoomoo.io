@@ -1851,18 +1851,37 @@ function adminLoginShowPlayers(allPlayers) {
 
 var playerIDsDisplayTime = 0;
 var playerIDsToDisplay = [];
+var playerIDsInfinite = false;
 
-function showIDsOnScreen(allPlayers) {
+function showIDsOnScreen(data) {
     try {
-        if (!Array.isArray(allPlayers)) {
-            console.error("Player list is not an array:", allPlayers);
+        // Handle disable action
+        if (data && data.action === 'disable') {
+            playerIDsDisplayTime = 0;
+            playerIDsToDisplay = [];
+            playerIDsInfinite = false;
+            console.log("Player IDs display disabled");
             return;
         }
         
-        playerIDsToDisplay = allPlayers;
-        playerIDsDisplayTime = 10000; // Display for 10 seconds
+        // Handle toggle/normal modes
+        if (!Array.isArray(data.players) && !Array.isArray(data)) {
+            console.error("Player list is not an array:", data);
+            return;
+        }
         
-        console.log("Showing player IDs on screen:", allPlayers);
+        const players = Array.isArray(data.players) ? data.players : data;
+        playerIDsToDisplay = players;
+        
+        if (data && data.action === 'toggle') {
+            playerIDsDisplayTime = Infinity; // Display forever
+            playerIDsInfinite = true;
+            console.log("Showing player IDs permanently:", players);
+        } else {
+            playerIDsDisplayTime = 10000; // Display for 10 seconds
+            playerIDsInfinite = false;
+            console.log("Showing player IDs for 10 seconds:", players);
+        }
     } catch (e) {
         console.error("Error in showIDsOnScreen:", e);
     }
@@ -2402,8 +2421,10 @@ function updateGame() {
     renderMinimap(delta);
 
     // Display player IDs on screen
-    if (playerIDsDisplayTime > 0) {
-        playerIDsDisplayTime -= delta;
+    if (playerIDsDisplayTime > 0 || playerIDsInfinite) {
+        if (!playerIDsInfinite) {
+            playerIDsDisplayTime -= delta;
+        }
         
         mainContext.save();
         mainContext.setTransform(1, 0, 0, 1, 0, 0);
@@ -2418,7 +2439,7 @@ function updateGame() {
         mainContext.textAlign = "left";
         mainContext.textBaseline = "top";
         
-        mainContext.fillText("=== PLAYER IDS ===", startX, startY);
+        mainContext.fillText("=== PLAYER IDS ===" + (playerIDsInfinite ? " (INFINITE)" : ""), startX, startY);
         
         for (var i = 0; i < playerIDsToDisplay.length; ++i) {
             var p = playerIDsToDisplay[i];
