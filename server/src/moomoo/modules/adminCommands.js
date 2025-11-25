@@ -466,18 +466,20 @@ export class AdminCommands {
     }
 
     handleKill(params, player) {
-        if (params.length < 2 || params[0] !== 'player') {
-            return { success: false, message: 'Usage: /kill player [player ID]' };
+        if (params.length < 1) {
+            return { success: false, message: 'Usage: /kill [player ID]' };
         }
         
-        const targets = this.getTargetPlayer(params[1]);
+        const targets = this.getTargetPlayer(params[0]);
         
         if (targets.length === 0) {
             return { success: false, message: 'Player not found' };
         }
         
         targets.forEach(target => {
-            target.die();
+            if (target.alive) {
+                target.changeHealth(-target.health, player);
+            }
         });
         
         return { success: true, message: `Killed ${targets.length} player(s)` };
