@@ -228,6 +228,14 @@ module.exports = function (id, sid, config, UTILS, projectileManager,
                 this.slowMult = 1;
         }
 
+        // Editor mode: auto-place items when holding mouse button
+        if (this.gameMode === 1 && this.buildIndex >= 0 && this.mouseState === 1) {
+            var item = items.list[this.buildIndex];
+            if (item) {
+                this.buildItem(item);
+            }
+        }
+
         this.noMovTimer += delta;
         if (this.xVel || this.yVel) this.noMovTimer = 0;
         if (this.lockMove) {
@@ -432,17 +440,12 @@ module.exports = function (id, sid, config, UTILS, projectileManager,
     this.buildItem = function (item) {
         var tmpX, tmpY;
         
-        // Editor mode: place at cursor position
+        // Editor mode: place at cursor position (crosshair)
         if (this.gameMode === 1) {
-            // The canvas rendering uses the camera position (camX, camY)
-            // Mouse position is in screen coordinates (0 to screenWidth/Height)
-            // World coordinate = camera center + offset from screen center
-            var screenCenterX = screenWidth / 2;
-            var screenCenterY = screenHeight / 2;
-            var offsetX = mouseX - screenCenterX;
-            var offsetY = mouseY - screenCenterY;
-            tmpX = camX + offsetX;
-            tmpY = camY + offsetY;
+            // Canvas center is where camera is
+            // Mouse position is in screen coordinates
+            tmpX = camX + (mouseX - (screenWidth / 2));
+            tmpY = camY + (mouseY - (screenHeight / 2));
         } else {
             // Normal mode: place in front of player
             var tmpS = (this.scale + item.scale + (item.placeOffset || 0));
