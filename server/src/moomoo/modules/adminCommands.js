@@ -1631,7 +1631,6 @@ export class AdminCommands {
         // Toggle shield for targets
         targets.forEach(target => {
             target.hasShield = !target.hasShield;
-            target.sentTo = {}; // Force resync to client
             const status = target.hasShield ? 'enabled' : 'disabled';
             target.send('6', -1, `Shield ${status}`);
         });
