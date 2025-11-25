@@ -1710,32 +1710,26 @@ function keyDown(event) {
             } else if (keyNum == 88) {
                 sendLockDir();
             } else if (keyNum >= 49 && keyNum <= 57) {
-                // Keys 1-9: Handle item selection
+                // Keys 1-9: Handle item selection (maps to action bar indices)
                 var keyIndex = keyNum - 49; // 0-8
                 
                 if (player.gameMode === 1) {
-                    // In editor mode, map directly to items: 1=hammer, 2=apple, etc.
+                    // In editor mode, map directly to items by ID: 1=hammer, 2=apple, etc.
                     if (keyIndex < items.list.length) {
                         selectToBuild(items.list[keyIndex].id);
                     }
                 } else {
-                    // Normal mode: build combined list of weapons (by type) then items
-                    var weaponList = [];
-                    var itemList = player.items || [];
+                    // Normal mode: action bar has weapons first (items.weapons.length), then items
+                    var totalWeaponSlots = items.weapons ? items.weapons.length : 0;
+                    var isWeapon = (keyIndex < totalWeaponSlots);
                     
-                    // Collect weapons indexed by type (player.weapons is indexed by weapon type)
-                    for (var wType = 0; wType < items.weapons.length; ++wType) {
-                        if (player.weapons && player.weapons[wType] != undefined) {
-                            weaponList.push(player.weapons[wType]);
-                        }
-                    }
-                    
-                    // Combine weapons and items into one list for key selection
-                    var combinedList = weaponList.concat(itemList);
-                    
-                    if (keyIndex < combinedList.length) {
-                        var isWeapon = (keyIndex < weaponList.length);
-                        selectToBuild(combinedList[keyIndex], isWeapon);
+                    if (isWeapon) {
+                        // Selecting a weapon slot
+                        selectToBuild(keyIndex, true);
+                    } else {
+                        // Selecting an item slot
+                        var itemIndex = keyIndex - totalWeaponSlots;
+                        selectToBuild(itemIndex, false);
                     }
                 }
             } else if (keyNum == 81) {
