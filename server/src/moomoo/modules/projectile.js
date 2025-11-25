@@ -79,7 +79,8 @@ export class Projectile {
                             }
                         }
                         if (hitObj.isPlayer || hitObj.isAI) {
-                            var tmpSd = 0.3 * (hitObj.weightM || 1);
+                            var knockMult = this.owner && this.owner.knockbackMultiplier ? this.owner.knockbackMultiplier : 1;
+                            var tmpSd = 0.3 * (hitObj.weightM || 1) * knockMult;
                             hitObj.xVel += tmpSd * Math.cos(this.dir);
                             hitObj.yVel += tmpSd * Math.sin(this.dir);
                             if (hitObj.weaponIndex == undefined || !(items.weapons[hitObj.weaponIndex].shield && UTILS.getAngleDist(this.dir + Math.PI, hitObj.dir) <= config.shieldAngle)) {

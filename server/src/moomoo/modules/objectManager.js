@@ -290,7 +290,8 @@ export class ObjectManager {
                         }
                         if (other.dmg && other.owner != player && !(other.owner && other.owner.team && other.owner.team == player.team)) {
                             player.changeHealth(-other.dmg, other.owner, other);
-                            var tmpSpd = 1.5 * (other.weightM || 1);
+                            var knockMult = other.owner && other.owner.knockbackMultiplier ? other.owner.knockbackMultiplier : 1;
+                            var tmpSpd = 1.5 * (other.weightM || 1) * knockMult;
                             player.xVel += tmpSpd * mathCOS(tmpDir);
                             player.yVel += tmpSpd * mathSIN(tmpDir);
                             if (other.pDmg && !(player.skin && player.skin.poisonRes)) {

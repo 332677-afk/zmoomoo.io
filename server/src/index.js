@@ -99,13 +99,8 @@ wss.on("connection", async (socket, req) => {
 
     const addr = req.headers["x-forwarded-for"]?.split(",")[0] ?? req.socket.remoteAddress;
 
-    if (adminCommands.bannedIPs.has(addr)) {
-        const banExpiry = adminCommands.bannedIPs.get(addr);
-        if (banExpiry > Date.now()) {
-            return void socket.close(4003);
-        } else {
-            adminCommands.bannedIPs.delete(addr);
-        }
+    if (adminCommands.checkBan(addr)) {
+        return void socket.close(4003);
     }
 
     if (

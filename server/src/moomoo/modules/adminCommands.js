@@ -1,5 +1,11 @@
 import { items } from './items.js';
 import { hats, accessories } from './store.js';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export class AdminCommands {
     constructor(game) {
@@ -7,6 +13,114 @@ export class AdminCommands {
         this.reports = new Map();
         this.warnings = new Map();
         this.bannedIPs = new Map();
+        this.bansFilePath = path.resolve(__dirname, '../../../data/bans.json');
+        this.loadBans();
+    }
+
+    loadBans() {
+        try {
+            if (fs.existsSync(this.bansFilePath)) {
+                const data = fs.readFileSync(this.bansFilePath, 'utf8');
+                const bansObject = JSON.parse(data);
+                const originalCount = Object.keys(bansObject).length;
+                
+                this.pruneBans(bansObject);
+                
+                if (this.bannedIPs.size < originalCount) {
+                    this.saveBans();
+                    console.log(`[Admin] Loaded ${this.bannedIPs.size} active bans (pruned ${originalCount - this.bannedIPs.size} expired)`);
+                } else {
+                    console.log(`[Admin] Loaded ${this.bannedIPs.size} active bans from disk`);
+                }
+            }
+        } catch (error) {
+            console.error('[Admin] Error loading bans:', error);
+        }
+    }
+
+    pruneBans(bansObject = null) {
+        const now = Date.now();
+        let pruned = false;
+        
+        if (bansObject) {
+            for (const [ip, expiry] of Object.entries(bansObject)) {
+                if (expiry > now) {
+                    this.bannedIPs.set(ip, expiry);
+                } else {
+                    pruned = true;
+                }
+            }
+        } else {
+            for (const [ip, expiry] of Array.from(this.bannedIPs.entries())) {
+                if (expiry <= now) {
+                    this.bannedIPs.delete(ip);
+                    pruned = true;
+                }
+            }
+        }
+        
+        if (pruned) {
+            this.saveBans();
+            console.log(`[Admin] Pruned expired bans`);
+        }
+        
+        return pruned;
+    }
+
+    checkBan(ip) {
+        const banExpiry = this.bannedIPs.get(ip);
+        if (!banExpiry) return false;
+        
+        if (banExpiry > Date.now()) {
+            return true;
+        } else {
+            this.bannedIPs.delete(ip);
+            this.saveBans();
+            return false;
+        }
+    }
+
+    saveBans() {
+        try {
+            const bansObject = {};
+            for (const [ip, expiry] of this.bannedIPs.entries()) {
+                bansObject[ip] = expiry;
+            }
+            
+            const dir = path.dirname(this.bansFilePath);
+            if (!fs.existsSync(dir)) {
+                fs.mkdirSync(dir, { recursive: true });
+            }
+            
+            fs.writeFileSync(this.bansFilePath, JSON.stringify(bansObject, null, 2));
+            console.log(`[Admin] Saved ${this.bannedIPs.size} bans to disk`);
+        } catch (error) {
+            console.error('[Admin] Error saving bans:', error);
+        }
+    }
+
+    setCustomDamage(player, value) {
+        const damage = Number(value);
+        
+        if (value === 'normal' || value === null) {
+            player.customDamage = null;
+            return { success: true, value: null };
+        }
+        
+        if (!Number.isFinite(damage)) {
+            return { success: false, error: 'Damage must be a finite number' };
+        }
+        
+        if (damage === 0) {
+            return { success: false, error: 'Damage cannot be zero' };
+        }
+        
+        if (damage > 0) {
+            return { success: false, error: 'Damage must be negative (use positive for healing)' };
+        }
+        
+        player.customDamage = damage;
+        return { success: true, value: damage };
     }
 
     parseCommand(message, player) {
@@ -279,7 +393,10 @@ export class AdminCommands {
                     target.XP = value;
                     break;
                 case 'damage':
-                    target.customDamage = value;
+                    const damageResult = this.setCustomDamage(target, value);
+                    if (!damageResult.success) {
+                        throw new Error(damageResult.error);
+                    }
                     break;
             }
         });
@@ -410,6 +527,7 @@ export class AdminCommands {
             }
         });
         
+        this.saveBans();
         return { success: true, message: `Banned ${targets.length} player(s) for ${duration} seconds` };
     }
 
@@ -425,6 +543,7 @@ export class AdminCommands {
             this.bannedIPs.delete(ip);
         });
         
+        this.saveBans();
         return { success: true, message: 'Player(s) pardoned' };
     }
 
@@ -478,7 +597,10 @@ export class AdminCommands {
         }
         
         targets.forEach(target => {
-            target.customDamage = 0.1;
+            const result = this.setCustomDamage(target, -0.1);
+            if (!result.success) {
+                throw new Error(result.error);
+            }
             setTimeout(() => {
                 target.customDamage = null;
             }, duration);
@@ -499,11 +621,17 @@ export class AdminCommands {
             return { success: false, message: 'Player not found' };
         }
         
+        if (!Number.isFinite(intensity)) {
+            return { success: false, message: 'Intensity must be a finite number' };
+        }
+        
+        const clampedIntensity = intensity === 0 ? 1 : Math.max(0, Math.min(intensity, 10));
+        
         targets.forEach(target => {
-            target.knockbackMultiplier = intensity === 0 ? 1 : intensity;
+            target.knockbackMultiplier = clampedIntensity;
         });
         
-        return { success: true, message: `Set knockback to ${intensity} for ${targets.length} player(s)` };
+        return { success: true, message: `Set knockback to ${clampedIntensity} for ${targets.length} player(s)` };
     }
 
     handleRandomTeleport(params, player) {

@@ -828,7 +828,7 @@ export class Player {
                                 dmgMlt = items.weapons[tmpObj.weaponIndex].shield;
                             }
                             var dmgVal = items.weapons[this.weaponIndex].dmg * (this.skin && this.skin.dmgMultO ? this.skin.dmgMultO : 1) * (this.tail && this.tail.dmgMultO ? this.tail.dmgMultO : 1);
-                            var tmpSpd = 0.3 * (tmpObj.weightM || 1) + (items.weapons[this.weaponIndex].knock || 0);
+                            var tmpSpd = (0.3 * (tmpObj.weightM || 1) + (items.weapons[this.weaponIndex].knock || 0)) * (this.knockbackMultiplier || 1);
                             tmpObj.xVel += tmpSpd * mathCOS(tmpDir);
                             tmpObj.yVel += tmpSpd * mathSIN(tmpDir);
                             if (this.skin && this.skin.healD) {
