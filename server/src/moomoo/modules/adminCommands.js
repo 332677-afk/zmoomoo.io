@@ -420,11 +420,19 @@ export class AdminCommands {
                     target.addResource(3, value - (target.items[3] || 0), true);
                     break;
                 case 'kills':
-                    target.kills = Math.max(0, parseInt(value));
+                    if (value === null) {
+                        target.kills = 0;
+                    } else {
+                        target.kills = Math.max(0, parseInt(value));
+                    }
                     target.send('N', 'kills', target.kills, 1);
                     break;
                 case 'xp':
-                    target.XP = value;
+                    if (value === null) {
+                        target.XP = 0;
+                    } else {
+                        target.XP = value;
+                    }
                     break;
                 case 'damage':
                     if (value === null) {
@@ -437,7 +445,11 @@ export class AdminCommands {
                 case 'weaponspeed':
                 case 'speed':
                     // Higher value = faster reload/attack. weaponSpeed is a multiplier where > 1 speeds up
-                    target.weaponSpeed = parseFloat(value);
+                    if (value === null) {
+                        target.weaponSpeed = 1;
+                    } else {
+                        target.weaponSpeed = parseFloat(value);
+                    }
                     break;
             }
         });

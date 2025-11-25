@@ -69,8 +69,10 @@ export class AiManager {
             drop: ["food", 200]
         }, {
             id: 5,
+            name: "Quack",
             src: "chicken_1",
             killScore: 2000,
+            noTrap: true,
             health: 300,
             weightM: 0.2,
             speed: 0.0018,
