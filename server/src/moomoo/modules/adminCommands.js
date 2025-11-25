@@ -260,6 +260,8 @@ export class AdminCommands {
                 return this.handleRestart(params, player);
             case 'weaponrange':
                 return this.handleWeaponRange(params, player);
+            case 'gamemode':
+                return this.handleGameMode(params, player);
             default:
                 return { success: false, message: `Unknown command: ${command}` };
         }
@@ -1523,5 +1525,49 @@ export class AdminCommands {
             : `Set weapon range to ${value} for ${targets.length} player(s)`;
 
         return { success: true, message };
+    }
+
+    handleGameMode(params, player) {
+        if (params.length < 1) {
+            return { success: false, message: 'Usage: /gamemode [0|1] [optional: player ID|others|all]' };
+        }
+
+        const modeStr = params[0];
+        const mode = parseInt(modeStr);
+
+        if (mode !== 0 && mode !== 1) {
+            return { success: false, message: 'Game mode must be 0 (normal) or 1 (editor)' };
+        }
+
+        let targets = [];
+        
+        if (params.length > 1) {
+            const target = params[1].toLowerCase();
+            if (target === 'all') {
+                targets = this.game.players.filter(p => p.alive);
+            } else if (target === 'others') {
+                targets = this.game.players.filter(p => p.alive && p !== player);
+            } else {
+                const targetId = parseInt(params[1]);
+                const foundPlayer = this.game.players.find(p => p.sid === targetId && p.alive);
+                if (!foundPlayer) {
+                    return { success: false, message: 'Player not found' };
+                }
+                targets = [foundPlayer];
+            }
+        } else {
+            targets = [player];
+        }
+
+        // Apply gameMode to targets
+        targets.forEach(target => {
+            target.gameMode = mode;
+            target.sentTo = {}; // Force resync to client
+            const modeText = mode === 1 ? 'editor' : 'normal';
+            target.send('6', -1, `Game mode changed to ${modeText}`);
+        });
+
+        const modeText = mode === 1 ? 'editor' : 'normal';
+        return { success: true, message: `Set ${targets.length} player(s) to ${modeText} mode` };
     }
 }

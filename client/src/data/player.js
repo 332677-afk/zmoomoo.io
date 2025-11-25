@@ -39,6 +39,7 @@ module.exports = function (id, sid, config, UTILS, projectileManager,
     this.skinColor = 0;
     this.cps = 0;
     this.ping = -1;
+    this.gameMode = 0;
 
     this.spawn = function (moofoll) {
         this.active = true;
@@ -427,9 +428,21 @@ module.exports = function (id, sid, config, UTILS, projectileManager,
     };
 
     this.buildItem = function (item) {
-        var tmpS = (this.scale + item.scale + (item.placeOffset || 0));
-        var tmpX = this.x + (tmpS * mathCOS(this.dir));
-        var tmpY = this.y + (tmpS * mathSIN(this.dir));
+        var tmpX, tmpY;
+        
+        // Editor mode: place at cursor position
+        if (this.gameMode === 1) {
+            // Convert screen coordinates to world coordinates
+            // Uses the global xOffset and yOffset variables
+            tmpX = (mouseX - screenWidth / 2) / 50 + camX;
+            tmpY = (mouseY - screenHeight / 2) / 50 + camY;
+        } else {
+            // Normal mode: place in front of player
+            var tmpS = (this.scale + item.scale + (item.placeOffset || 0));
+            tmpX = this.x + (tmpS * mathCOS(this.dir));
+            tmpY = this.y + (tmpS * mathSIN(this.dir));
+        }
+        
         if (this.canBuild(item) && !(item.consume && (this.skin && this.skin.noEat)) &&
             (item.consume || objectManager.checkItemLocation(tmpX, tmpY, item.scale,
                 0.6, item.id, false, this))) {
@@ -482,6 +495,10 @@ module.exports = function (id, sid, config, UTILS, projectileManager,
     };
 
     this.hasRes = function (item, mult) {
+        // Editor mode has infinite resources
+        if (this.gameMode === 1) {
+            return true;
+        }
         for (var i = 0; i < item.req.length;) {
             if (this[item.req[i]] < Math.round(item.req[i + 1] * (mult || 1)))
                 return false;
@@ -500,6 +517,10 @@ module.exports = function (id, sid, config, UTILS, projectileManager,
     };
 
     this.canBuild = function (item) {
+        // Editor mode allows infinite building
+        if (this.gameMode === 1) {
+            return true;
+        }
         if (config.isSandbox) {
             if (item.group) {
                 var count = this.itemCounts[item.group.id] || 0;

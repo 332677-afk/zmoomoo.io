@@ -135,6 +135,7 @@ export class Player {
             this.sandboxMillCount = 0;
             this.packetCounter = 0;
             this.packetWindowStart = Date.now();
+            this.gameMode = 0;
 
             const spawn = objectManager.fetchSpawnObj(this.sid);
 
@@ -581,6 +582,10 @@ export class Player {
 
         // CHANGE HEALTH:
         this.changeHealth = function(amount, doer) {
+            // Editor mode players cannot take damage
+            if (this.gameMode === 1 && amount < 0) {
+                return false;
+            }
             if (this.isInvincible && amount < 0) {
                 return false;
             }

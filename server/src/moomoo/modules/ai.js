@@ -103,6 +103,10 @@ export class AI {
                                 var bestDst;
                                 var tmpDist;
                                 for (var i = 0; i < players.length; ++i) {
+                                    // Skip editor mode players
+                                    if (players[i].gameMode === 1) {
+                                        continue;
+                                    }
                                     if (players[i].alive && !(players[i].skin && players[i].skin.bullRepel)) {
                                         tmpDist = UTILS.getDistance(this.x, this.y, players[i].x, players[i].y);
                                         if (tmpDist <= this.viewRange && (!tmpPlayer || tmpDist < bestDst)) {
@@ -337,6 +341,10 @@ export class AI {
             if (this.active) {
                 this.health += val;
                 if (runFrom) {
+                    // Ignore editor mode players (gameMode 1)
+                    if (runFrom.isPlayer && runFrom.gameMode === 1) {
+                        return;
+                    }
                     if (this.hitScare && !UTILS.randInt(0, this.hitScare)) {
                         this.runFrom = runFrom;
                         this.waitCount = 0;
