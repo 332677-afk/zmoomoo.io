@@ -1670,7 +1670,9 @@ var keyCodeMap = {
     'KeyQ': 81, 'KeyR': 82,
     'Space': 32, 'Escape': 27, 'Enter': 13,
     'Digit1': 49, 'Digit2': 50, 'Digit3': 51, 'Digit4': 52, 'Digit5': 53,
-    'Digit6': 54, 'Digit7': 55, 'Digit8': 56, 'Digit9': 57
+    'Digit6': 54, 'Digit7': 55, 'Digit8': 56, 'Digit9': 57,
+    'Numpad1': 49, 'Numpad2': 50, 'Numpad3': 51, 'Numpad4': 52, 'Numpad5': 53,
+    'Numpad6': 54, 'Numpad7': 55, 'Numpad8': 56, 'Numpad9': 57
 };
 
 // normalize keys - handles modern key codes and falls back to legacy stuff
@@ -1707,10 +1709,22 @@ function keyDown(event) {
                 updateMapMarker();
             } else if (keyNum == 88) {
                 sendLockDir();
-            } else if (player.weapons[keyNum - 49] != undefined) {
-                selectToBuild(player.weapons[keyNum - 49], true);
-            } else if (player.items[keyNum - 49 - player.weapons.length] != undefined) {
-                selectToBuild(player.items[keyNum - 49 - player.weapons.length]);
+            } else if (keyNum >= 49 && keyNum <= 57) {
+                // Keys 1-9: Handle items directly in gamemode 1
+                var keyIndex = keyNum - 49; // 0-8
+                if (player.gameMode === 1) {
+                    // In editor mode, map directly to items: 1=hammer, 2=apple, etc.
+                    if (keyIndex < items.list.length) {
+                        selectToBuild(items.list[keyIndex].id);
+                    }
+                } else {
+                    // Normal mode: check weapons first, then items
+                    if (player.weapons[keyIndex] != undefined) {
+                        selectToBuild(player.weapons[keyIndex], true);
+                    } else if (player.items[keyIndex - player.weapons.length] != undefined) {
+                        selectToBuild(player.items[keyIndex - player.weapons.length]);
+                    }
+                }
             } else if (keyNum == 81) {
                 selectToBuild(player.items[0]);
             } else if (keyNum == 82) {
