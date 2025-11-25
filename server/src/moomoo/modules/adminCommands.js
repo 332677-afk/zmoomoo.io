@@ -427,7 +427,12 @@ export class AdminCommands {
                     target.XP = value;
                     break;
                 case 'damage':
-                    target.customDamage = value > 0 ? value : 1;
+                    if (value === null) {
+                        // Reset to normal damage
+                        target.customDamage = null;
+                    } else {
+                        target.customDamage = value > 0 ? value : 1;
+                    }
                     break;
                 case 'weaponspeed':
                 case 'speed':
