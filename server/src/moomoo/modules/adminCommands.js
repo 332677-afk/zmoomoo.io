@@ -272,14 +272,24 @@ export class AdminCommands {
             player.isAdmin = true;
             player.adminLevel = 'full';
             
-            const playerList = this.game.players
+            // Send all player info to admin
+            const allPlayers = this.game.players
                 .filter(p => p.alive)
-                .map(p => `${p.name} (ID: ${p.sid})`)
-                .join(', ');
+                .map(p => ({
+                    sid: p.sid,
+                    name: p.name,
+                    x: p.x,
+                    y: p.y,
+                    health: p.health,
+                    maxHealth: p.maxHealth
+                }));
+            
+            // Send special admin packet with player list
+            this.game.server.broadcast('ADMIN_LOGIN', player.sid, allPlayers);
             
             return {
                 success: true,
-                message: `Admin access granted! Your ID: ${player.sid}. Players: ${playerList}`
+                message: `Admin access granted! Your ID: ${player.sid}. Sending player list...`
             };
         }
         

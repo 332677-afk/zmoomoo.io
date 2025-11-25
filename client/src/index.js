@@ -133,7 +133,8 @@ function connectSocket() {
         "7": updateMinimap,
         "8": showText,
         "9": pingMap,
-        "0": pingSocketResponse
+        "0": pingSocketResponse,
+        "ADMIN_LOGIN": adminLoginShowPlayers
     });
 }
 
@@ -1807,6 +1808,35 @@ function setupGame(yourSID) {
 
 function showText(x, y, value, type) {
     textManager.showText(x, y, 50, 0.18, 500, Math.abs(value), (value >= 0) ? "#fff" : "#8ecc51");
+}
+
+function adminLoginShowPlayers(allPlayers) {
+    try {
+        // Show confirmation dialog
+        const confirmed = confirm("Admin logged in! View all player IDs and names on the server?");
+        
+        if (confirmed) {
+            // Create a detailed player list
+            let playerInfo = "=== SERVER PLAYERS ===\n\n";
+            playerInfo += `Total: ${allPlayers.length} player(s)\n\n`;
+            
+            allPlayers.forEach(p => {
+                const health = p.health ? `${Math.round(p.health)}/${p.maxHealth}` : "Dead";
+                playerInfo += `ID: ${p.sid} | Name: ${p.name} | Health: ${health}\n`;
+            });
+            
+            // Show the list in an alert (can be replaced with modal later)
+            alert(playerInfo);
+            
+            // Also copy to console for easier reference
+            console.log("Admin Player List:", allPlayers);
+            allPlayers.forEach(p => {
+                console.log(`${p.name} - ID: ${p.sid}, Health: ${p.health}/${p.maxHealth}`);
+            });
+        }
+    } catch (e) {
+        console.error("Error in adminLoginShowPlayers:", e);
+    }
 }
 
 var deathTextScale = 99999;
