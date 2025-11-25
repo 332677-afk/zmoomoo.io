@@ -2368,8 +2368,12 @@ function updateGame() {
         }
 
         mainContext.globalAlpha = 1;
-        mainContext.fillStyle = "rgba(0, 0, 70, 0.35)";
-        mainContext.fillRect(0, 0, maxScreenWidth, maxScreenHeight);
+        
+        // Dark mode overlay - only draw if player has darkMode enabled
+        if (player && player.darkMode) {
+            mainContext.fillStyle = "rgba(0, 0, 70, 0.35)";
+            mainContext.fillRect(0, 0, maxScreenWidth, maxScreenHeight);
+        }
 
         mainContext.strokeStyle = darkOutlineColor;
         for (var i = 0; i < players.length + ais.length; ++i) {
