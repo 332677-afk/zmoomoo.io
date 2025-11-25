@@ -624,11 +624,11 @@ export class AdminCommands {
     }
 
     handleKick(params, player) {
-        if (params.length < 2 || params[0] !== 'player') {
-            return { success: false, message: 'Usage: /kick player [player ID]' };
+        if (params.length < 1) {
+            return { success: false, message: 'Usage: /kick [player ID]' };
         }
         
-        const targets = this.getTargetPlayer(params[1]);
+        const targets = this.getTargetPlayer(params[0]);
         
         if (targets.length === 0) {
             return { success: false, message: 'Player not found' };
@@ -673,18 +673,37 @@ export class AdminCommands {
 
     handlePardon(params, player) {
         if (params.length < 1) {
-            return { success: false, message: 'Usage: /pardon [player ID]' };
+            return { success: false, message: 'Usage: /pardon [player ID|all]' };
         }
         
+        const targetStr = params[0].toLowerCase();
+        
+        // Handle "all" to unban everyone
+        if (targetStr === 'all') {
+            const count = this.bannedIPs.size;
+            this.bannedIPs.clear();
+            this.saveBans();
+            return { success: true, message: `Unbanned all ${count} player(s)` };
+        }
+        
+        // Handle specific player ID
         const targets = this.getTargetPlayer(params[0]);
+        let unbanCount = 0;
         
         targets.forEach(target => {
             const ip = target.ipAddress || 'unknown';
-            this.bannedIPs.delete(ip);
+            if (this.bannedIPs.has(ip)) {
+                this.bannedIPs.delete(ip);
+                unbanCount++;
+            }
         });
         
+        if (unbanCount === 0) {
+            return { success: false, message: 'Player is not banned or not found' };
+        }
+        
         this.saveBans();
-        return { success: true, message: 'Player(s) pardoned' };
+        return { success: true, message: `Pardoned ${unbanCount} player(s)` };
     }
 
     handleFreeze(params, player) {
