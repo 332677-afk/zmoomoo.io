@@ -28,11 +28,10 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm start"
-waitForPort = 5000
+args = "./restart.sh"
 
 [workflows.workflow.metadata]
-outputType = "webview"
+outputType = "console"
 
 [[ports]]
 localPort = 5000

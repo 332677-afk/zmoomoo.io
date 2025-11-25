@@ -1468,10 +1468,11 @@ export class AdminCommands {
     }
 
     handleRestart(params, player) {
-        this.game.server.broadcast('6', -1, 'Server restarting in 5 seconds...');
-        setTimeout(() => {
+        this.game.server.broadcast('6', -1, 'Server restarting...');
+        // Exit with code 0 - Replit will auto-restart the workflow
+        setImmediate(() => {
             process.exit(0);
-        }, 5000);
+        });
         
         return { success: true, message: 'Server restart initiated' };
     }
