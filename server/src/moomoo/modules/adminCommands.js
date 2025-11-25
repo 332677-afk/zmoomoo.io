@@ -470,7 +470,12 @@ export class AdminCommands {
             return { success: false, message: 'Usage: /kill [player ID]' };
         }
         
-        const targets = this.getTargetPlayer(params[0]);
+        let targets = this.getTargetPlayer(params[0]);
+        
+        // Exclude the admin running the command when using /kill all
+        if (params[0] === 'all' || params[0] === 'every') {
+            targets = targets.filter(t => t.id !== player.id);
+        }
         
         if (targets.length === 0) {
             return { success: false, message: 'Player not found' };
