@@ -2286,10 +2286,6 @@ function updateGame() {
 
                 if (tmpObj.skinIndex != 10 || (tmpObj == player) || (tmpObj.team && tmpObj.team == player.team)) {
                     var tmpText = (tmpObj.team ? "[" + tmpObj.team + "] " : "") + (tmpObj.name || "");
-                    // Add player ID for admins
-                    if (player && player.isAdmin && tmpObj.sid !== undefined) {
-                        tmpText = "[ID: " + tmpObj.sid + "] " + tmpText;
-                    }
                     if (tmpText != "") {
                         mainContext.font = (tmpObj.nameScale || 30) + "px Hammersmith One";
                         mainContext.fillStyle = "#fff";
@@ -2299,6 +2295,21 @@ function updateGame() {
                         mainContext.lineJoin = "round";
                         mainContext.strokeText(tmpText, tmpObj.x - xOffset, (tmpObj.y - yOffset - tmpObj.scale) - config.nameY);
                         mainContext.fillText(tmpText, tmpObj.x - xOffset, (tmpObj.y - yOffset - tmpObj.scale) - config.nameY);
+                        
+                        // Render player ID above name for admins
+                        if (player && player.isAdmin && tmpObj.sid !== undefined) {
+                            var idText = "ID: " + tmpObj.sid;
+                            mainContext.font = "24px Hammersmith One";
+                            mainContext.fillStyle = "#ff0000";
+                            mainContext.textBaseline = "middle";
+                            mainContext.textAlign = "center";
+                            mainContext.lineWidth = 6;
+                            mainContext.lineJoin = "round";
+                            var idY = (tmpObj.y - yOffset - tmpObj.scale) - config.nameY - 35;
+                            mainContext.strokeText(idText, tmpObj.x - xOffset, idY);
+                            mainContext.fillStyle = "#ff0000";
+                            mainContext.fillText(idText, tmpObj.x - xOffset, idY);
+                        }
                         if (tmpObj.isLeader && iconSprites["crown"].isLoaded) {
                             var tmpS = config.crownIconScale;
                             var tmpX = tmpObj.x - xOffset - (tmpS / 2) - (mainContext.measureText(tmpText).width / 2) - config.crownPad;
