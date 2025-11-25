@@ -147,7 +147,7 @@ IoClient.prototype._handleMessage = function (message) {
     try {
         handler.apply(undefined, args);
     } catch (error) {
-        console.error("Handler for packet type '" + type + "' failed:", error);
+        console.error("Handler for packet type '" + type + "' failed:", error, error ? error.message : "unknown", error ? error.stack : "no stack");
     }
 };
 
