@@ -312,8 +312,9 @@ export class AdminCommands {
             return { success: true, message: 'Player IDs display disabled' };
         }
         
+        // Get all players except the requesting player
         const allPlayers = this.game.players
-            .filter(p => p.alive)
+            .filter(p => p.alive && p !== player)
             .map(p => ({
                 sid: p.sid,
                 name: p.name,
@@ -335,7 +336,7 @@ export class AdminCommands {
         this.game.server.send(player.id, 'SHOW_IDS', payload);
         
         const displayMode = isToggle ? 'permanently' : 'for 10 seconds';
-        return { success: true, message: `Displaying ${allPlayers.length} player(s) ${displayMode}` };
+        return { success: true, message: `Displaying ${allPlayers.length} other player(s) ${displayMode}` };
     }
 
     getTargetPlayer(targetId, excludePlayer = null) {
