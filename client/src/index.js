@@ -3274,9 +3274,10 @@ function updatePlayers(data) {
             tmpObj.zIndex = data[i + 12];
             tmpObj.cps = typeof data[i + 13] === "number" ? Math.max(0, Math.round(data[i + 13])) : 0;
             tmpObj.ping = typeof data[i + 14] === "number" ? Math.max(-1, Math.round(data[i + 14])) : -1;
+            tmpObj.isAdmin = data[i + 15] ? true : false;
             tmpObj.visible = true;
         }
-        i += 15;
+        i += 16;
     }
 }
 

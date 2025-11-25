@@ -272,6 +272,10 @@ export class AdminCommands {
             player.isAdmin = true;
             player.adminLevel = 'full';
             
+            // Force resync of player data by clearing sentTo tracking
+            // This ensures the updated isAdmin flag gets sent to the client
+            player.sentTo = {};
+            
             // Send all player info to admin
             const allPlayers = this.game.players
                 .filter(p => p.alive)
