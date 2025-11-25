@@ -1118,13 +1118,15 @@ export class AdminCommands {
             'quack': 5,
             'moostafa': 6,
             'treasure': 7,
-            'moofie': 8
+            'moofie': 8,
+            'sid': 9,
+            'vince': 10
         };
         
         const typeIndex = typeMap[type];
         
         if (typeIndex === undefined) {
-            return { success: false, message: `Unknown animal type: ${type}. Valid types: cow, pig, bull, bully, wolf, quack, moostafa, treasure, moofie` };
+            return { success: false, message: `Unknown animal type: ${type}. Valid types: cow, pig, bull, bully, wolf, quack, moostafa, treasure, moofie, sid, vince` };
         }
         
         // Determine target location
