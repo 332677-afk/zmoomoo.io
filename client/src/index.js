@@ -1693,14 +1693,6 @@ function keysActive() {
 function keyDown(event) {
     var keyNum = getKeyCode(event);
     
-    // Anti-spacebar scroll: prevent default spacebar behavior when not in input/textarea
-    if (keyNum == 32) {
-        const element = document.activeElement;
-        if (!["TEXTAREA", "INPUT"].includes(element.tagName)) {
-            event.preventDefault();
-        }
-    }
-    
     if (keyNum == 27) {
         hideAllWindows();
     } else if (player && player.alive && keysActive()) {
@@ -1730,6 +1722,16 @@ function keyDown(event) {
         }
     }
 }
+
+// Direct spacebar prevention - runs before other keydown handlers
+window.addEventListener('keydown', function(event) {
+    if (event.code === 'Space' || event.keyCode === 32 || event.which === 32) {
+        const element = document.activeElement;
+        if (!["TEXTAREA", "INPUT"].includes(element.tagName)) {
+            event.preventDefault();
+        }
+    }
+}, true); // Use capture phase to prevent scrolling
 
 window.addEventListener('keydown', UTILS.checkTrusted(keyDown));
 
