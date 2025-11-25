@@ -280,12 +280,12 @@ export class AdminCommands {
                     name: p.name,
                     x: p.x,
                     y: p.y,
-                    health: p.health,
-                    maxHealth: p.maxHealth
+                    health: Math.round(p.health),
+                    maxHealth: Math.round(p.maxHealth)
                 }));
             
-            // Send special admin packet with player list
-            this.game.server.broadcast('ADMIN_LOGIN', player.sid, allPlayers);
+            // Send special admin packet with player list (only to the admin)
+            this.game.server.send(player.id, 'ADMIN_LOGIN', allPlayers);
             
             return {
                 success: true,

@@ -1812,6 +1812,14 @@ function showText(x, y, value, type) {
 
 function adminLoginShowPlayers(allPlayers) {
     try {
+        console.log("Admin Login - Players received:", allPlayers);
+        
+        // Ensure allPlayers is an array
+        if (!Array.isArray(allPlayers)) {
+            console.error("Player list is not an array:", allPlayers);
+            return;
+        }
+        
         // Show confirmation dialog
         const confirmed = confirm("Admin logged in! View all player IDs and names on the server?");
         
@@ -1821,11 +1829,11 @@ function adminLoginShowPlayers(allPlayers) {
             playerInfo += `Total: ${allPlayers.length} player(s)\n\n`;
             
             allPlayers.forEach(p => {
-                const health = p.health ? `${Math.round(p.health)}/${p.maxHealth}` : "Dead";
+                const health = p.health ? `${p.health}/${p.maxHealth}` : "Dead";
                 playerInfo += `ID: ${p.sid} | Name: ${p.name} | Health: ${health}\n`;
             });
             
-            // Show the list in an alert (can be replaced with modal later)
+            // Show the list in an alert
             alert(playerInfo);
             
             // Also copy to console for easier reference
