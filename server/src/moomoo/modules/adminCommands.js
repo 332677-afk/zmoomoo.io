@@ -1107,20 +1107,32 @@ export class AdminCommands {
             return { success: false, message: 'Amount must be a positive number' };
         }
         
-        for (let i = 0; i < amount; i++) {
-            const x = player.x + (Math.random() - 0.5) * 100;
-            const y = player.y + (Math.random() - 0.5) * 100;
-            
-            if (['moofie', 'moostafa', 'vince', 'sid'].includes(type)) {
-                this.game.ai_manager.addAI(x, y, type, true);
-            } else if (['wolf', 'bull', 'bully'].includes(type)) {
-                this.game.ai_manager.addAI(x, y, type, false);
-            } else {
-                return { success: false, message: `Unknown animal type: ${type}` };
-            }
+        // Map animal names to AI type indices
+        const typeMap = {
+            'cow': 0,
+            'pig': 1,
+            'bull': 2,
+            'bully': 3,
+            'wolf': 4,
+            'quack': 5,
+            'moostafa': 6,
+            'treasure': 7,
+            'moofie': 8
+        };
+        
+        const typeIndex = typeMap[type];
+        
+        if (typeIndex === undefined) {
+            return { success: false, message: `Unknown animal type: ${type}. Valid types: cow, pig, bull, bully, wolf, quack, moostafa, treasure, moofie` };
         }
         
-        return { success: true, message: `Spawned ${amount} ${type}(s) on you` };
+        for (let i = 0; i < amount; i++) {
+            const x = player.x + (Math.random() - 0.5) * 200;
+            const y = player.y + (Math.random() - 0.5) * 200;
+            this.game.ai_manager.spawn(x, y, 0, typeIndex);
+        }
+        
+        return { success: true, message: `Spawned ${amount} ${type}(s) around you` };
     }
 
     handleReport(params, player) {
