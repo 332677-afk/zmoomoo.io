@@ -220,6 +220,7 @@ var players = [];
 var alliances = [];
 var gameObjects = [];
 var projectiles = [];
+var explosions = [];
 var projectileManager = new ProjectileManager(Projectile, projectiles, players, ais, objectManager, items, config, UTILS);
 var AiManager = require("./data/aiManager.js");
 var AI = require("./data/ai.js");
@@ -1861,21 +1862,29 @@ function killPlayer() {
     }
 }
 
+var explosionSprite = null;
+function loadExplosionSprite() {
+    if (!explosionSprite) {
+        explosionSprite = new Image();
+        explosionSprite.onload = function() { this.isLoaded = true; };
+        explosionSprite.src = "../img/effects/explosion.jpg";
+    }
+}
+loadExplosionSprite();
+
 function explosionEffect(sid, x, y) {
     try {
-        // Create explosion particles at the location
-        for (let i = 0; i < 8; i++) {
-            const angle = (Math.PI * 2 * i) / 8;
-            const speed = 0.15 + Math.random() * 0.1;
-            const vx = Math.cos(angle) * speed;
-            const vy = Math.sin(angle) * speed;
-            
-            // Show floating text at explosion location
-            textManager.showText(x, y, 50, 0.15, 400, "BOOM!", "#ff6b35");
-        }
+        // Show floating text at explosion location
+        textManager.showText(x, y, 50, 0.15, 400, "BOOM!", "#ff6b35");
         
-        // Optional: Play sound effect (if implemented)
-        // if (config.soundEffects) { playSound('explosion'); }
+        // Add explosion animation
+        explosions.push({
+            x: x,
+            y: y,
+            startTime: Date.now(),
+            duration: 600,
+            scale: 100
+        });
     } catch (e) {
         console.error("Error in explosionEffect:", e);
     }
@@ -2205,6 +2214,7 @@ function updateGame() {
         renderPlayers(xOffset, yOffset, 1);
         renderGameObjects(2, xOffset, yOffset);
         renderGameObjects(3, xOffset, yOffset);
+        renderExplosions(xOffset, yOffset);
 
         mainContext.fillStyle = "#000";
         mainContext.globalAlpha = 0.09;
@@ -2396,6 +2406,60 @@ function renderProjectile(x, y, obj, ctxt, debug) {
     } else if (obj.indx == 1) {
         ctxt.fillStyle = "#939393";
         renderCircle(x, y, obj.scale, ctxt);
+    }
+}
+
+function renderExplosions(xOffset, yOffset) {
+    for (var i = explosions.length - 1; i >= 0; --i) {
+        var exp = explosions[i];
+        var elapsed = Date.now() - exp.startTime;
+        
+        if (elapsed >= exp.duration) {
+            explosions.splice(i, 1);
+            continue;
+        }
+        
+        var progress = elapsed / exp.duration;
+        var screenX = exp.x - xOffset;
+        var screenY = exp.y - yOffset;
+        
+        if (isOnScreen(screenX, screenY, exp.scale)) {
+            mainContext.save();
+            
+            // Fade out over time
+            mainContext.globalAlpha = 1 - progress;
+            
+            // Scale up slightly
+            var scale = exp.scale * (1 + progress * 0.5);
+            
+            if (explosionSprite && explosionSprite.isLoaded) {
+                // Draw the sprite centered and scaled
+                mainContext.translate(screenX, screenY);
+                mainContext.scale(scale / exp.scale, scale / exp.scale);
+                mainContext.drawImage(explosionSprite, -exp.scale / 2, -exp.scale / 2, exp.scale, exp.scale);
+                mainContext.translate(-screenX, -screenY);
+            } else {
+                // Fallback: draw orange circle with BOOM text
+                mainContext.fillStyle = "#ff6b35";
+                mainContext.beginPath();
+                mainContext.arc(screenX, screenY, scale / 2, 0, Math.PI * 2);
+                mainContext.fill();
+                
+                // Draw white burst lines
+                mainContext.strokeStyle = "white";
+                mainContext.lineWidth = 2;
+                for (var j = 0; j < 8; j++) {
+                    var angle = (Math.PI * 2 * j) / 8;
+                    var len = scale;
+                    mainContext.beginPath();
+                    mainContext.moveTo(screenX, screenY);
+                    mainContext.lineTo(screenX + Math.cos(angle) * len, screenY + Math.sin(angle) * len);
+                    mainContext.stroke();
+                }
+            }
+            
+            mainContext.restore();
+        }
     }
 }
 
