@@ -1551,15 +1551,10 @@ export class AdminCommands {
         }
         
         for (let i = 0; i < amount; i++) {
-            const offsetX = (Math.random() - 0.5) * 100;
-            const offsetY = (Math.random() - 0.5) * 100;
-            const mineX = Math.max(0, Math.min(this.game.config.mapScale, player.x + offsetX));
-            const mineY = Math.max(0, Math.min(this.game.config.mapScale, player.y + offsetY));
-            
             this.game.objectManager.add(
                 Math.floor(Math.random() * 999999),
-                mineX,
-                mineY,
+                player.x,
+                player.y,
                 0,
                 30,
                 7,
@@ -1569,6 +1564,6 @@ export class AdminCommands {
             );
         }
         
-        return { success: true, message: `Spawned ${amount} mine(s) around you` };
+        return { success: true, message: `Spawned ${amount} mine(s) on your location` };
     }
 }
