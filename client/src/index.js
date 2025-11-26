@@ -1824,7 +1824,7 @@ function setupGame(yourSID) {
 }
 
 function showText(x, y, value, type) {
-    textManager.showText(x, y, 50, 0.18, 500, Math.abs(value), (value < 0) ? "#fff" : "#8ecc51");
+    textManager.showText(x, y, 50, 0.18, 500, Math.abs(value), (value > 0) ? "#fff" : "#8ecc51");
 }
 
 function showInvincibleText(x, y) {
@@ -2406,7 +2406,7 @@ function updateGame() {
                         }
                         if (tmpObj.isInvincible && iconSprites["shield"].isLoaded) {
                             var tmpS = config.crownIconScale;
-                            var tmpIconOffset = tmpObj.isLeader ? (tmpS + config.crownPad + 5) : 0;
+                            var tmpIconOffset = tmpObj.isLeader ? (tmpS + config.crownPad) : 0;
                             var tmpX = tmpObj.x - xOffset - (tmpS / 2) - (mainContext.measureText(tmpText).width / 2) - config.crownPad - tmpIconOffset;
                             mainContext.drawImage(iconSprites["shield"], tmpX, (tmpObj.y - yOffset - tmpObj.scale) - config.nameY - (tmpS / 2) - 5, tmpS, tmpS);
                         }
