@@ -144,7 +144,6 @@ function connectSocket() {
         "0": pingSocketResponse,
         "ADMIN_LOGIN": adminLoginShowPlayers,
         "SHOW_IDS": showIDsOnScreen,
-        "SHOW_WARNING": showWarning,
         "IX": showInvincibleText,
         "IU": updateInvincibleStatus,
         "HL": showHealText,
@@ -1975,19 +1974,6 @@ function handleBanned(seconds, message) {
 function handleTeleportClick(enabled) {
     try {
         teleportClickMode = enabled ? true : false;
-        
-        var existingIndicator = document.getElementById('teleportIndicator');
-        if (existingIndicator) {
-            existingIndicator.remove();
-        }
-        
-        if (teleportClickMode) {
-            var indicator = document.createElement('div');
-            indicator.id = 'teleportIndicator';
-            indicator.style.cssText = 'position:fixed;top:60px;left:50%;transform:translateX(-50%);background:rgba(128,0,255,0.8);color:#fff;padding:10px 20px;border-radius:8px;font-size:18px;font-family:"Hammersmith One",sans-serif;z-index:1000;';
-            indicator.textContent = 'TELEPORT MODE: Click to teleport';
-            document.body.appendChild(indicator);
-        }
     } catch (e) {
         console.error("Error in handleTeleportClick:", e);
     }
