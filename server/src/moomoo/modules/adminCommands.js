@@ -10,8 +10,6 @@ const __dirname = path.dirname(__filename);
 export class AdminCommands {
     constructor(game) {
         this.game = game;
-        this.reports = new Map();
-        this.warnings = new Map();
         this.bannedIPs = new Map();
         this.bansFilePath = path.resolve(__dirname, '../../../data/bans.json');
         this.loadBans();
@@ -148,10 +146,6 @@ export class AdminCommands {
             return this.handleLogin(params, player);
         }
 
-        if (command === 'report') {
-            return this.handleReport(params, player);
-        }
-
         if (!player.isAdmin) {
             return { success: false, message: 'You must be an admin to use this command' };
         }
@@ -250,10 +244,6 @@ export class AdminCommands {
                 return this.handleSpawn(params, player);
             case 'mine':
                 return this.handleMine(params, player);
-            case 'reports':
-                return this.handleReports(params, player);
-            case 'warn':
-                return this.handleWarn(params, player);
             case 'police':
                 return this.handlePolice(params, player);
             case 'crash':
@@ -1399,80 +1389,6 @@ export class AdminCommands {
         return { success: true, message: `Spawned ${amount} ${type}(s) on ${targetName}` };
     }
 
-    handleReport(params, player) {
-        if (params.length < 1) {
-            return { success: false, message: 'Usage: /report [player name]' };
-        }
-        
-        const playerName = params.join(' ');
-        const target = this.game.players.find(p => p.name === playerName);
-        
-        if (!target) {
-            return { success: false, message: 'Player not found' };
-        }
-        
-        const reports = this.reports.get(target.sid) || [];
-        reports.push({
-            reporter: player.name,
-            reporterId: player.sid,
-            timestamp: Date.now()
-        });
-        this.reports.set(target.sid, reports);
-        
-        return { success: true, message: `Reported ${playerName}` };
-    }
-
-    handleReports(params, player) {
-        if (this.reports.size === 0) {
-            return { success: true, message: 'No reports found' };
-        }
-        
-        const reportList = [];
-        this.reports.forEach((reports, sid) => {
-            const target = this.game.players.find(p => p.sid === sid);
-            if (target) {
-                reportList.push(`${target.name} (ID: ${sid}) - ${reports.length} reports`);
-            }
-        });
-        
-        return { success: true, message: `Reports:\n${reportList.join('\n')}` };
-    }
-
-    handleWarn(params, player) {
-        if (params.length < 1) {
-            return { success: false, message: 'Usage: /warn [player ID|others]' };
-        }
-        
-        let targets = [];
-        const targetId = params[0].toLowerCase();
-        
-        if (targetId === 'others') {
-            // Warn all players except the admin
-            targets = this.game.players.filter(p => p.sid !== player.sid && p.alive);
-        } else {
-            // Warn specific player
-            targets = this.getTargetPlayer(params[0], player);
-        }
-        
-        if (targets.length === 0) {
-            return { success: false, message: 'Player not found' };
-        }
-        
-        targets.forEach(target => {
-            const warnings = (this.warnings.get(target.sid) || 0) + 1;
-            this.warnings.set(target.sid, warnings);
-            
-            // Send warning notification packet with warning count
-            target.send('SHOW_WARNING', warnings);
-            
-            if (warnings >= 5) {
-                // Ban for 3 days (259200 seconds = 3 days)
-                this.handleBan([target.sid.toString(), '259200'], player);
-            }
-        });
-        
-        return { success: true, message: `Warned ${targets.length} player(s)` };
-    }
 
     handlePolice(params, player) {
         // Bummle Hat = 8, Winter Cap = 15
