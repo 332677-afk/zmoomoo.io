@@ -1562,7 +1562,7 @@ export class AdminCommands {
                 player.y,
                 0,
                 50,
-                0,
+                2,
                 mineData,
                 true,
                 player
