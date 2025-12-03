@@ -88,6 +88,8 @@ export class Player {
         
         this.isAdmin = false;
         this.adminLevel = null;
+        this.account = null;
+        this.accountUsername = null;
         this.isFrozen = false;
         this.isInvisible = false;
         this.isInvincible = false;

@@ -14,6 +14,7 @@ import { filter_chat } from "./moomoo/libs/filterchat.js";
 import { config } from "./moomoo/config.js";
 import { ConnectionLimit } from "./moomoo/libs/limit.js";
 import { AdminCommands } from "./moomoo/modules/adminCommands.js";
+import { AccountManager, AdminLevel } from "./moomoo/modules/Account.js";
 import { fileURLToPath } from "node:url";
 
 const app = e();
@@ -58,6 +59,7 @@ if (!fs.existsSync(INDEX)) {
 
 const game = new Game;
 const adminCommands = new AdminCommands(game);
+const accountManager = new AccountManager();
 
 app.get("/", (req, res) => {
     res.sendFile(INDEX)
@@ -92,6 +94,64 @@ app.get("/ping", (_req, res) => {
 
 app.get("/play", (req, res) => {
     res.sendFile(INDEX);
+});
+
+app.post("/api/account/register", async (req, res) => {
+    try {
+        const { username, password, displayName } = req.body;
+
+        if (!username || typeof username !== 'string') {
+            return res.status(400).json({ success: false, error: 'Username is required' });
+        }
+
+        if (!password || typeof password !== 'string') {
+            return res.status(400).json({ success: false, error: 'Password is required' });
+        }
+
+        if (username.length < 4 || username.length > 16) {
+            return res.status(400).json({ success: false, error: 'Username must be 4-16 characters' });
+        }
+
+        if (password.length < 8 || password.length > 30) {
+            return res.status(400).json({ success: false, error: 'Password must be 8-30 characters' });
+        }
+
+        const result = await accountManager.createAccount(username, password, displayName);
+
+        if (result.success) {
+            res.json({ success: true, account: result.account });
+        } else {
+            res.status(400).json({ success: false, error: result.error });
+        }
+    } catch (error) {
+        console.error('[API] Register error:', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
+app.post("/api/account/login", async (req, res) => {
+    try {
+        const { username, password } = req.body;
+
+        if (!username || typeof username !== 'string') {
+            return res.status(400).json({ success: false, error: 'Username is required' });
+        }
+
+        if (!password || typeof password !== 'string') {
+            return res.status(400).json({ success: false, error: 'Password is required' });
+        }
+
+        const result = await accountManager.validatePassword(username, password);
+
+        if (result.success) {
+            res.json({ success: true, account: result.account });
+        } else {
+            res.status(401).json({ success: false, error: result.error });
+        }
+    } catch (error) {
+        console.error('[API] Login error:', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
 });
 
 app.use(e.static(CLIENT_DIST_DIR));
@@ -632,6 +692,60 @@ wss.on("connection", async (socket, req) => {
 
                     break;
                 }
+                case "AUTH": {
+                    const authData = data[0];
+                    if (!authData || typeof authData !== 'object') {
+                        emit("AUTH_RESULT", { success: false, error: 'Invalid auth data' });
+                        break;
+                    }
+
+                    const { username, password } = authData;
+
+                    if (!username || typeof username !== 'string' || !password || typeof password !== 'string') {
+                        emit("AUTH_RESULT", { success: false, error: 'Username and password required' });
+                        break;
+                    }
+
+                    try {
+                        if (!accountManager.canCreateSession(username)) {
+                            emit("AUTH_RESULT", { success: false, error: 'Maximum sessions reached (2)' });
+                            break;
+                        }
+
+                        const result = await accountManager.validatePassword(username, password);
+
+                        if (result.success) {
+                            if (player.account) {
+                                accountManager.removeSession(player.account.username);
+                            }
+
+                            player.account = result.account;
+                            player.accountUsername = result.account.username;
+                            
+                            if (result.account.adminLevel > AdminLevel.None) {
+                                player.isAdmin = true;
+                                player.adminLevel = result.account.adminLevel;
+                            }
+
+                            accountManager.addSession(username);
+
+                            emit("AUTH_RESULT", { 
+                                success: true, 
+                                account: result.account,
+                                message: `Logged in as ${result.account.displayName}`
+                            });
+
+                            console.log(`[Account] Player ${player.sid} authenticated as ${result.account.username} (Admin Level: ${result.account.adminLevel})`);
+                        } else {
+                            emit("AUTH_RESULT", { success: false, error: result.error });
+                        }
+                    } catch (error) {
+                        console.error('[Account] Auth error:', error);
+                        emit("AUTH_RESULT", { success: false, error: 'Authentication failed' });
+                    }
+
+                    break;
+                }
                 default:
                     handleInvalidPacket(`unknown packet type "${t}"`);
                     return;
@@ -649,6 +763,10 @@ wss.on("connection", async (socket, req) => {
     socket.on("close", reason => {
 
         colimit.down(addr);
+
+        if (player.accountUsername) {
+            accountManager.removeSession(player.accountUsername);
+        }
 
         if (player.team) {
 
