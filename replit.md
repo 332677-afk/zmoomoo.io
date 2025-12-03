@@ -128,6 +128,45 @@ This project is configured for split deployment:
    ```
 4. Rebuild and redeploy the client
 
+## MooMoo.js Modding API
+
+The project includes MooMoo.js, a powerful open-source API for modding MooMoo.io. It's loaded in `client/public/libs/moomoo-js.js`.
+
+### Key Features
+- **Packet Intercepting**: Intercept incoming and outgoing WebSocket packets
+- **Player Data Manipulation**: Access and modify player coordinates, inventory, etc.
+- **Built-in msgpack**: Encode/decode packets easily
+- **Event System**: Listen to game events (player death, item pickup, etc.)
+- **Bot Manager**: Create and manage game bots
+- **Command Manager**: Register custom chat commands
+
+### Usage Example
+```javascript
+// Access the MooMoo API
+const MooMoo = Function.prototype[69];
+
+// Listen for game events
+MooMoo.on('playerDeath', (player) => {
+    console.log(`${player.name} died!`);
+});
+
+// Intercept packets
+MooMoo.PacketInterceptor.addCallback('client', (packet) => {
+    console.log('Outgoing packet:', packet);
+    return packet; // Return modified or original packet
+});
+
+// Access player data
+console.log(MooMoo.myPlayer.x, MooMoo.myPlayer.y);
+```
+
+## Recent Changes (December 3, 2025)
+- Added MooMoo.js modding API for advanced game customization
+- Packet intercepting for client and server messages
+- Player data manipulation capabilities
+- Bot management system
+- Custom command registration
+
 ## Recent Changes (November 26, 2025)
 - Added super hammer weapon with lightning effect
 - Added /smite command with lightning visual and "SMITED" blue text
