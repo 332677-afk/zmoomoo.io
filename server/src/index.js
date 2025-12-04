@@ -16,8 +16,13 @@ import { filter_chat } from "./moomoo/libs/filterchat.js";
 import { config } from "./moomoo/config.js";
 import { ConnectionLimit } from "./moomoo/libs/limit.js";
 import { AdminCommands } from "./moomoo/modules/adminCommands.js";
-import { AccountManager, AdminLevel } from "./moomoo/modules/Account.js";
+import { AccountManager, AdminLevel, sessionStore } from "./moomoo/modules/Account.js";
 import { fileURLToPath } from "node:url";
+import { packetValidator, MAX_MESSAGE_SIZE } from "./security/packetValidator.js";
+import { rateLimiter, ESCALATION_LEVELS } from "./security/rateLimiter.js";
+
+const SESSION_CLEANUP_INTERVAL = 5 * 60 * 1000;
+const SESSION_CHECK_INTERVAL = 60 * 1000;
 
 const app = e();
 
@@ -241,13 +246,50 @@ app.post("/api/account/login", async (req, res) => {
         const result = await accountManager.validatePassword(username, password);
 
         if (result.success) {
-            res.json({ success: true, account: result.account });
+            res.json({ 
+                success: true, 
+                account: result.account,
+                sessionToken: result.sessionToken,
+                sessionExpiresAt: result.sessionExpiresAt
+            });
         } else {
             res.status(401).json({ success: false, error: result.error });
         }
     } catch (error) {
         console.error('[API] Login error:', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
+app.post("/api/account/logout", async (req, res) => {
+    try {
+        const { sessionToken } = req.body;
+        
+        if (!sessionToken) {
+            return res.status(400).json({ success: false, error: 'Session token required' });
+        }
+        
+        const result = accountManager.invalidateSessionToken(sessionToken);
+        res.json({ success: result.success });
+    } catch (error) {
+        console.error('[API] Logout error:', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
+app.post("/api/account/validate-session", async (req, res) => {
+    try {
+        const { sessionToken } = req.body;
+        
+        if (!sessionToken) {
+            return res.status(400).json({ valid: false, error: 'Session token required' });
+        }
+        
+        const result = accountManager.checkSession(sessionToken);
+        res.json(result);
+    } catch (error) {
+        console.error('[API] Validate session error:', error);
+        res.status(500).json({ valid: false, error: 'Internal server error' });
     }
 });
 
@@ -275,13 +317,52 @@ wss.on("connection", async (socket, req) => {
 
     colimit.up(addr);
 
+    const urlParams = new URL(req.url, `http://${req.headers.host}`).searchParams;
+    const sessionToken = urlParams.get('sessionToken');
+    
+    let sessionUserId = null;
+    if (sessionToken) {
+        const sessionValidation = sessionStore.validateSession(sessionToken);
+        if (sessionValidation.valid) {
+            sessionUserId = sessionValidation.session.userId;
+            sessionStore.refreshSession(sessionToken);
+        }
+    }
+
     const player = game.addPlayer(socket);
     player.ipAddress = addr;
+    player.sessionToken = sessionToken;
+    player.sessionUserId = sessionUserId;
+    player.lastActivity = Date.now();
 
     const emit = async (type, ...data) => {
 
         if (!player.socket) return;
         socket.send(encode([type, data]));
+    };
+    
+    const checkSessionExpiry = () => {
+        if (!player.sessionToken) return;
+        
+        const validation = sessionStore.validateSession(player.sessionToken);
+        if (!validation.valid) {
+            console.log(`[Session] Session expired for player ${player.sid}: ${validation.reason}`);
+            emit("SESSION_EXPIRED", { reason: validation.reason });
+            setTimeout(() => {
+                if (player.socket) {
+                    player.socket.close(4004);
+                }
+            }, 1000);
+        }
+    };
+    
+    const sessionCheckInterval = setInterval(checkSessionExpiry, SESSION_CHECK_INTERVAL);
+    
+    const refreshPlayerSession = () => {
+        player.lastActivity = Date.now();
+        if (player.sessionToken) {
+            sessionStore.refreshSession(player.sessionToken);
+        }
     };
 
     const handleInvalidPacket = reason => {
@@ -304,6 +385,15 @@ wss.on("connection", async (socket, req) => {
     socket.on("message", async msg => {
 
         try {
+
+            refreshPlayerSession();
+
+            const sizeCheck = packetValidator.checkMessageSize(msg);
+            if (!sizeCheck.valid) {
+                console.warn(`[Security] Oversized packet from ${addr}: ${sizeCheck.reason}`);
+                handleInvalidPacket(sizeCheck.reason);
+                return;
+            }
 
             const now = Date.now();
             if (!player.packetWindowStart || (now - player.packetWindowStart) >= 1000) {
@@ -342,7 +432,40 @@ wss.on("connection", async (socket, req) => {
                 return;
             }
 
-            const data = payload;
+            const rateLimitResult = rateLimiter.checkLimit(player.id, addr, t);
+            if (!rateLimitResult.allowed) {
+                if (rateLimitResult.action === 'disconnect' || rateLimitResult.action === 'ban') {
+                    console.warn(`[Security] Rate limit action '${rateLimitResult.action}' for player ${player.sid} (${addr}): ${rateLimitResult.reason}`);
+                    if (rateLimitResult.action === 'disconnect') {
+                        handleInvalidPacket(`rate limit: ${rateLimitResult.reason}`);
+                    } else if (rateLimitResult.action === 'ban') {
+                        socket.close(4005);
+                        return;
+                    }
+                    return;
+                }
+                if (rateLimitResult.action === 'warning') {
+                    emit("RATE_LIMIT_WARNING", { message: rateLimitResult.reason });
+                }
+                if (rateLimitResult.action === 'freeze') {
+                    emit("RATE_LIMIT_FREEZE", { 
+                        message: rateLimitResult.reason,
+                        duration: rateLimitResult.freezeExpires ? rateLimitResult.freezeExpires - Date.now() : 5000
+                    });
+                    return;
+                }
+                return;
+            }
+
+            const validationContext = { playerId: player.sid, ipAddress: addr };
+            const validationResult = packetValidator.validatePacket(t, payload, validationContext);
+            
+            if (!validationResult.valid) {
+                console.warn(`[Security] Packet validation failed for player ${player.sid} (${addr}): ${t} - ${validationResult.reason}`);
+                return;
+            }
+
+            const data = validationResult.sanitizedData || payload;
 
             switch(t) {
                 case "M": {
@@ -940,7 +1063,14 @@ wss.on("connection", async (socket, req) => {
 
     socket.on("close", async reason => {
 
+        clearInterval(sessionCheckInterval);
+        
         colimit.down(addr);
+        rateLimiter.removePlayer(player.id);
+        
+        if (player.sessionToken) {
+            sessionStore.invalidateSession(player.sessionToken);
+        }
 
         if (player.accountUsername) {
             accountManager.updateClientSessionStats(player.id, {
@@ -969,6 +1099,13 @@ wss.on("connection", async (socket, req) => {
 
 });
 
+setInterval(() => {
+    const result = sessionStore.cleanupExpiredSessions();
+    if (result.cleanedCount > 0) {
+        console.log(`[SessionStore] Cleanup: removed ${result.cleanedCount} expired sessions, ${result.remainingSessions} remaining`);
+    }
+}, SESSION_CLEANUP_INTERVAL);
+
 server.listen(PORT, HOST, (error) => {
 
     if (error) {
@@ -979,5 +1116,6 @@ server.listen(PORT, HOST, (error) => {
     const listenHost = typeof address === "string" ? address : address?.address ?? HOST;
     const listenPort = typeof address === "string" ? PORT : address?.port ?? PORT;
     console.log(`Server listening at http://${listenHost}:${listenPort}`);
+    console.log(`[SessionStore] Session cleanup scheduled every ${SESSION_CLEANUP_INTERVAL / 1000}s`);
 
 });

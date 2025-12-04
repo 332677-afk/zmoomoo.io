@@ -2,8 +2,10 @@ import bcrypt from 'bcryptjs';
 import { db } from '../../db.js';
 import { accounts, AdminLevel } from '../../../../shared/schema.js';
 import { eq, sql, desc } from 'drizzle-orm';
+import { sessionStore } from '../../security/sessionStore.js';
 
 export { AdminLevel };
+export { sessionStore };
 
 const PRESERVED_ACCOUNT_IDS = {
     'zahre': 'XUJP2NIB'
@@ -150,7 +152,14 @@ export class AccountManager {
                 
                 this.invalidateCache(username);
                 
-                return { success: true, account: this.sanitizeAccount(account) };
+                const sessionResult = sessionStore.createSession(account.accountId);
+                
+                return { 
+                    success: true, 
+                    account: this.sanitizeAccount(account),
+                    sessionToken: sessionResult.success ? sessionResult.token : null,
+                    sessionExpiresAt: sessionResult.success ? sessionResult.expiresAt : null
+                };
             } else {
                 return { success: false, error: 'Invalid password' };
             }
@@ -158,6 +167,22 @@ export class AccountManager {
             console.error('[Account] Error validating password:', error);
             return { success: false, error: 'Failed to validate password' };
         }
+    }
+    
+    checkSession(token) {
+        return sessionStore.validateSession(token);
+    }
+    
+    refreshSession(token) {
+        return sessionStore.refreshSession(token);
+    }
+    
+    invalidateSessionToken(token) {
+        return sessionStore.invalidateSession(token);
+    }
+    
+    invalidateAllUserSessions(userId) {
+        return sessionStore.invalidateUserSessions(userId);
     }
 
     sanitizeAccount(account) {

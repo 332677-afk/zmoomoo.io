@@ -90,6 +90,9 @@ export class Player {
         this.adminLevel = null;
         this.account = null;
         this.accountUsername = null;
+        this.sessionToken = null;
+        this.sessionUserId = null;
+        this.lastActivity = Date.now();
         this.isFrozen = false;
         this.isInvisible = false;
         this.isInvincible = false;
@@ -153,6 +156,7 @@ export class Player {
             this.sandboxMillCount = 0;
             this.packetCounter = 0;
             this.packetWindowStart = Date.now();
+            this.lastActivity = Date.now();
 
             const spawn = objectManager.fetchSpawnObj(this.sid);
 
