@@ -248,6 +248,8 @@ export class AccountManager {
                 .set({ adminLevel: level })
                 .where(eq(accounts.username, username.toLowerCase()));
             
+            this.invalidateCache(username);
+            
             console.log(`[Account] Set admin level for ${username} to ${level}`);
             return true;
         } catch (error) {
