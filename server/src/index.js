@@ -19,6 +19,54 @@ import { fileURLToPath } from "node:url";
 
 const app = e();
 
+const loginAttempts = new Map();
+const LOGIN_RATE_LIMIT = 5;
+const LOGIN_RATE_WINDOW = 60000;
+
+function checkLoginRateLimit(ip) {
+    const now = Date.now();
+    const attempts = loginAttempts.get(ip) || { count: 0, firstAttempt: now };
+    
+    if (now - attempts.firstAttempt > LOGIN_RATE_WINDOW) {
+        attempts.count = 1;
+        attempts.firstAttempt = now;
+    } else {
+        attempts.count++;
+    }
+    
+    loginAttempts.set(ip, attempts);
+    return attempts.count <= LOGIN_RATE_LIMIT;
+}
+
+function sanitizeInput(str, maxLength = 30) {
+    if (typeof str !== 'string') return '';
+    return str
+        .slice(0, maxLength)
+        .replace(/[<>\"'&]/g, '')
+        .replace(/[\x00-\x1F\x7F]/g, '')
+        .trim();
+}
+
+function validateUsername(username) {
+    if (!username || typeof username !== 'string') return false;
+    if (username.length < 4 || username.length > 16) return false;
+    return /^[a-zA-Z0-9_]+$/.test(username);
+}
+
+function validatePassword(password) {
+    if (!password || typeof password !== 'string') return false;
+    return password.length >= 8 && password.length <= 30;
+}
+
+setInterval(() => {
+    const now = Date.now();
+    for (const [ip, data] of loginAttempts.entries()) {
+        if (now - data.firstAttempt > LOGIN_RATE_WINDOW * 2) {
+            loginAttempts.delete(ip);
+        }
+    }
+}, LOGIN_RATE_WINDOW);
+
 function generatePartyCode() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let code = '';
@@ -710,11 +758,16 @@ wss.on("connection", async (socket, req) => {
                     break;
                 }
                 case "AUTH": {
-                    const username = data[0];
+                    if (!checkLoginRateLimit(addr)) {
+                        emit("AUTH_RESULT", { success: false, error: 'Too many login attempts. Please wait.' });
+                        break;
+                    }
+                    
+                    const username = sanitizeInput(data[0], 16);
                     const password = data[1];
 
-                    if (!username || typeof username !== 'string' || !password || typeof password !== 'string') {
-                        emit("AUTH_RESULT", { success: false, error: 'Username and password required' });
+                    if (!validateUsername(username) || !validatePassword(password)) {
+                        emit("AUTH_RESULT", { success: false, error: 'Invalid username or password format' });
                         break;
                     }
 
@@ -762,17 +815,27 @@ wss.on("connection", async (socket, req) => {
                     break;
                 }
                 case "REGISTER": {
-                    const username = data[0];
-                    const password = data[1];
-                    const displayName = data[2];
+                    if (!checkLoginRateLimit(addr)) {
+                        emit("REGISTER_RESULT", { success: false, error: 'Too many attempts. Please wait.' });
+                        break;
+                    }
 
-                    if (!username || typeof username !== 'string' || !password || typeof password !== 'string') {
-                        emit("REGISTER_RESULT", { success: false, error: 'Username and password required' });
+                    const username = sanitizeInput(data[0], 16);
+                    const password = data[1];
+                    const displayName = sanitizeInput(data[2] || data[0], 20);
+
+                    if (!validateUsername(username)) {
+                        emit("REGISTER_RESULT", { success: false, error: 'Username must be 4-16 characters (letters, numbers, underscore only)' });
+                        break;
+                    }
+
+                    if (!validatePassword(password)) {
+                        emit("REGISTER_RESULT", { success: false, error: 'Password must be 8-30 characters' });
                         break;
                     }
 
                     try {
-                        const result = await accountManager.createAccount(username, password, displayName || username);
+                        const result = await accountManager.createAccount(username, password, displayName);
 
                         if (result.success) {
                             player.account = result.account;

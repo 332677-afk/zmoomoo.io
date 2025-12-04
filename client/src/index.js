@@ -239,7 +239,11 @@ function loadKeybindSettings() {
     if (savedKeybinds) {
         try {
             var parsed = JSON.parse(savedKeybinds);
-            Object.assign(customKeybinds, parsed);
+            for (var key in parsed) {
+                if (parsed.hasOwnProperty(key) && typeof parsed[key] === 'string') {
+                    customKeybinds[key] = parsed[key].toLowerCase();
+                }
+            }
         } catch (e) {
             console.log("Failed to load keybinds");
         }
@@ -2150,6 +2154,16 @@ function keysActive() {
     return (chatHolder.style.display != "block");
 }
 
+function getKeyName(event) {
+    return event.key ? event.key.toLowerCase() : String.fromCharCode(event.keyCode || event.which).toLowerCase();
+}
+
+function checkCustomKeybind(event, bindName) {
+    var keyName = getKeyName(event);
+    var customKey = customKeybinds[bindName];
+    return customKey && keyName === customKey.toLowerCase();
+}
+
 function keyDown(event) {
     var keyNum = getKeyCode(event);
     
@@ -2158,7 +2172,20 @@ function keyDown(event) {
     } else if (player && player.alive && keysActive()) {
         if (!keys[keyNum]) {
             keys[keyNum] = 1;
-            if (keyNum == 69) {
+            
+            if (checkCustomKeybind(event, 'spike') && player.items) {
+                var spikeIndex = findItemByName('spike');
+                if (spikeIndex !== -1) selectToBuild(player.items[spikeIndex]);
+            } else if (checkCustomKeybind(event, 'trap') && player.items) {
+                var trapIndex = findItemByName('trap') !== -1 ? findItemByName('trap') : findItemByName('boost');
+                if (trapIndex !== -1) selectToBuild(player.items[trapIndex]);
+            } else if (checkCustomKeybind(event, 'windmill') && player.items) {
+                var windmillIndex = findItemByName('windmill');
+                if (windmillIndex !== -1) selectToBuild(player.items[windmillIndex]);
+            } else if (checkCustomKeybind(event, 'turret') && player.items) {
+                var turretIndex = findItemByName('turret');
+                if (turretIndex !== -1) selectToBuild(player.items[turretIndex]);
+            } else if (keyNum == 69) {
                 sendAutoGather();
             } else if (keyNum == 67) {
                 updateMapMarker();
@@ -2181,6 +2208,37 @@ function keyDown(event) {
             }
         }
     }
+}
+
+function findItemByName(name) {
+    if (!player || !player.items) return -1;
+    var nameLower = name.toLowerCase();
+    
+    var groupNameMap = {
+        'spike': 'spikes',
+        'trap': 'trap',
+        'boost': 'booster',
+        'windmill': 'mill',
+        'turret': 'turret'
+    };
+    
+    var targetGroupName = groupNameMap[nameLower] || nameLower;
+    
+    for (var i = 0; i < player.items.length; i++) {
+        var itemId = player.items[i];
+        if (itemId !== undefined && items.list[itemId]) {
+            var item = items.list[itemId];
+            if (item.group && item.group.name) {
+                if (item.group.name.toLowerCase() === targetGroupName.toLowerCase()) {
+                    return i;
+                }
+            }
+            if (item.name && item.name.toLowerCase().indexOf(nameLower) !== -1) {
+                return i;
+            }
+        }
+    }
+    return -1;
 }
 
 // Direct spacebar prevention - runs before other keydown handlers
