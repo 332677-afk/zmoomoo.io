@@ -1,5 +1,3 @@
-"use strict";
-
 // Check if running in Node.js environment
 var hasProcess = typeof process === "object" && process !== null;
 var hasArgv = hasProcess && Array.isArray(process.argv);

@@ -27,7 +27,24 @@ const SESSION_CHECK_INTERVAL = 60 * 1000;
 
 const app = e();
 
-const allowedOrigin = process.env.REPLIT_DEPLOYMENT_URL || '*';
+function getAllowedOrigins() {
+    const origins = [];
+    
+    if (process.env.REPLIT_DEPLOYMENT_URL) {
+        origins.push(process.env.REPLIT_DEPLOYMENT_URL);
+    }
+    if (process.env.REPLIT_DEV_DOMAIN) {
+        origins.push(`https://${process.env.REPLIT_DEV_DOMAIN}`);
+    }
+    if (process.env.REPLIT_DOMAINS) {
+        const domains = process.env.REPLIT_DOMAINS.split(',');
+        domains.forEach(d => origins.push(`https://${d.trim()}`));
+    }
+    
+    return origins.length > 0 ? origins : null;
+}
+
+const allowedOrigins = getAllowedOrigins();
 
 app.use(helmet({
     contentSecurityPolicy: {
@@ -58,10 +75,25 @@ app.use(helmet({
 }));
 
 app.use(cors({
-    origin: allowedOrigin === '*' ? true : allowedOrigin,
+    origin: function(origin, callback) {
+        if (!origin) {
+            return callback(null, true);
+        }
+        
+        if (allowedOrigins === null) {
+            return callback(null, false);
+        }
+        
+        if (allowedOrigins.some(allowed => origin === allowed || origin.endsWith(allowed.replace('https://', '.')))) {
+            return callback(null, true);
+        }
+        
+        console.log(`[CORS] Blocked request from origin: ${origin}`);
+        return callback(null, false);
+    },
     methods: ['GET', 'POST', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
+    credentials: allowedOrigins !== null,
     maxAge: 86400
 }));
 

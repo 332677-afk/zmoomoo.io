@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import { db } from '../../db.js';
+import { db, isDatabaseConnected } from '../../db.js';
 import { accounts, AdminLevel } from '../../../../shared/schema.js';
 import { eq, sql, desc } from 'drizzle-orm';
 import { sessionStore } from '../../security/sessionStore.js';
@@ -31,8 +31,14 @@ export class AccountManager {
         console.log('[Account] Database-backed AccountManager initialized with caching');
     }
 
+    isDatabaseAvailable() {
+        return db !== null && isDatabaseConnected;
+    }
+
     async getAccount(username, useCache = true) {
         if (!username || typeof username !== 'string') return null;
+        if (!this.isDatabaseAvailable()) return null;
+        
         const usernameLower = username.toLowerCase();
         
         if (useCache && this.accountCache.has(usernameLower)) {
@@ -59,6 +65,7 @@ export class AccountManager {
 
     async getAccountById(accountId) {
         if (!accountId) return null;
+        if (!this.isDatabaseAvailable()) return null;
         try {
             const [account] = await db.select().from(accounts).where(eq(accounts.accountId, accountId));
             return account || null;
@@ -69,6 +76,9 @@ export class AccountManager {
     }
 
     async createAccount(username, password, displayName = null) {
+        if (!this.isDatabaseAvailable()) {
+            return { success: false, error: 'Database not connected. Please add DATABASE_URL in Secrets.' };
+        }
         if (!username || typeof username !== 'string') {
             return { success: false, error: 'Username is required' };
         }
@@ -131,6 +141,9 @@ export class AccountManager {
     }
 
     async validatePassword(username, password) {
+        if (!this.isDatabaseAvailable()) {
+            return { success: false, error: 'Database not connected. Please add DATABASE_URL in Secrets.' };
+        }
         if (!username || typeof username !== 'string') {
             return { success: false, error: 'Username is required' };
         }
