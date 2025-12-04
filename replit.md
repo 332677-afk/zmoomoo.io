@@ -160,6 +160,49 @@ MooMoo.PacketInterceptor.addCallback('client', (packet) => {
 console.log(MooMoo.myPlayer.x, MooMoo.myPlayer.y);
 ```
 
+## Security Features (December 4, 2025)
+
+### Security Layers
+1. **CORS Protection**: Strict origin allowlist based on Replit domains
+2. **Helmet Headers**: HSTS, CSP, X-Frame-Options, XSS Filter, and more
+3. **Session Management**: 30-minute idle timeout, 24-hour absolute timeout
+4. **Rate Limiting**: Token bucket per player per opcode with escalation (warning → freeze → disconnect → ban)
+5. **Packet Validation**: Schema validation for all opcodes with string sanitization and numeric clamping
+6. **Anti-Cheat System**:
+   - Timing analysis (detects bot-like consistent timing)
+   - Movement validation (detects speed hacks, teleports)
+   - Activity monitoring (detects automation via mouse/keyboard patterns)
+   - Action validation (server-authoritative resource/cooldown checks)
+
+### Anti-Cheat Thresholds
+- Score > 50: Warning sent to player
+- Score > 70: Auto-kick
+- Score > 90: Temporary ban (24 hours)
+
+### Security Files
+- `server/src/security/sessionStore.js` - Session management
+- `server/src/security/packetValidator.js` - Packet validation
+- `server/src/security/rateLimiter.js` - Rate limiting
+- `server/src/security/antiCheat/` - Anti-cheat modules
+
+## Free Database Setup (Neon)
+
+The project supports the free Neon PostgreSQL database for persistent accounts.
+
+### Setup Instructions
+1. Go to https://neon.tech and sign up (free)
+2. Create a new project
+3. Copy your connection string (looks like `postgresql://user:pass@ep-xxx.region.aws.neon.tech/neondb?sslmode=require`)
+4. In Replit, go to "Secrets" (lock icon in sidebar)
+5. Add a new secret: Key = `DATABASE_URL`, Value = your Neon connection string
+6. Restart the server
+
+### Without Database
+If no DATABASE_URL is set, the server runs in "guest-only mode":
+- Players can still play as guests
+- Account registration/login shows "Database not connected" error
+- No persistent stats or accounts
+
 ## Recent Changes (December 4, 2025)
 - **Guest Mode System**:
   - Non-logged-in players automatically get "Guest#XXXXX" names (random 5-digit numbers)
