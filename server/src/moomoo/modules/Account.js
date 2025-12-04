@@ -5,7 +5,14 @@ import { eq, sql, desc } from 'drizzle-orm';
 
 export { AdminLevel };
 
-function generateAccountId() {
+const PRESERVED_ACCOUNT_IDS = {
+    'zahre': 'XUJP2NIB'
+};
+
+function generateAccountId(username = null) {
+    if (username && PRESERVED_ACCOUNT_IDS[username.toLowerCase()]) {
+        return PRESERVED_ACCOUNT_IDS[username.toLowerCase()];
+    }
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let id = '';
     for (let i = 0; i < 8; i++) {
@@ -90,7 +97,7 @@ export class AccountManager {
             const salt = await bcrypt.genSalt(12);
             const passwordHash = await bcrypt.hash(password, salt);
 
-            let accountId = generateAccountId();
+            let accountId = generateAccountId(username);
             let existingId = await this.getAccountById(accountId);
             while (existingId) {
                 accountId = generateAccountId();

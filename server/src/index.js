@@ -19,6 +19,14 @@ import { fileURLToPath } from "node:url";
 
 const app = e();
 
+function generatePartyCode() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+    for (let i = 0; i < 6; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+}
 
 app.use(e.json());
 
@@ -786,6 +794,31 @@ wss.on("connection", async (socket, req) => {
                         emit("REGISTER_RESULT", { success: false, error: 'Registration failed' });
                     }
 
+                    break;
+                }
+                case "CREATE_PARTY": {
+                    const partyCode = generatePartyCode();
+                    player.partyCode = partyCode;
+                    player.isPartyHost = true;
+                    emit("PARTY_CREATED", { code: partyCode });
+                    console.log(`[Party] Player ${player.sid} created party: ${partyCode}`);
+                    break;
+                }
+                case "JOIN_PARTY": {
+                    const code = data[0];
+                    if (!code || typeof code !== 'string') {
+                        emit("PARTY_JOIN_RESULT", { success: false, error: 'Party code required' });
+                        break;
+                    }
+                    const host = game.players.find(p => p.partyCode === code && p.isPartyHost);
+                    if (host) {
+                        player.partyCode = code;
+                        player.isPartyHost = false;
+                        emit("PARTY_JOIN_RESULT", { success: true, code: code });
+                        console.log(`[Party] Player ${player.sid} joined party: ${code}`);
+                    } else {
+                        emit("PARTY_JOIN_RESULT", { success: false, error: 'Party not found' });
+                    }
                     break;
                 }
                 default:

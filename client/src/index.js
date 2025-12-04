@@ -154,7 +154,9 @@ function connectSocket() {
         "TC": handleTeleportClick,
         "MM": handleMobMode,
         "AUTH_RESULT": handleAuthResult,
-        "REGISTER_RESULT": handleRegisterResult
+        "REGISTER_RESULT": handleRegisterResult,
+        "PARTY_CREATED": handlePartyCreated,
+        "PARTY_JOIN_RESULT": handlePartyJoinResult
     });
 }
 
@@ -186,6 +188,28 @@ function handleRegisterResult(data) {
             showNotification("Account created! ID: " + currentAccount.accountId);
         } else {
             showAuthError(result.error || "Registration failed");
+        }
+    }
+}
+
+function handlePartyCreated(data) {
+    var result = data;
+    if (result && result.code) {
+        showNotification("Party created! Code: " + result.code);
+        var partyBtnSpan = partyButton ? partyButton.getElementsByTagName("span")[0] : null;
+        if (partyBtnSpan) {
+            partyBtnSpan.innerText = result.code;
+        }
+    }
+}
+
+function handlePartyJoinResult(data) {
+    var result = data;
+    if (result) {
+        if (result.success) {
+            showNotification("Joined party: " + result.code);
+        } else {
+            showNotification("Failed to join party: " + (result.error || "Unknown error"));
         }
     }
 }
@@ -225,6 +249,7 @@ function updateAccountUI() {
         if (loginButtons) loginButtons.style.display = "block";
         if (accountInfo) accountInfo.style.display = "none";
     }
+    initGuestMode();
 }
 
 function formatNumber(num) {
@@ -343,7 +368,10 @@ function loadSavedAccount() {
             updateAccountUI();
         } catch (e) {
             currentAccount = null;
+            initGuestMode();
         }
+    } else {
+        initGuestMode();
     }
 }
 
@@ -352,7 +380,59 @@ function socketReady() {
 }
 
 function joinParty() {
-    alert("Party joining is not available in this build.");
+    var partyCode = prompt("Enter party code:");
+    if (partyCode && partyCode.trim()) {
+        io.send("JOIN_PARTY", partyCode.trim());
+        showNotification("Joining party: " + partyCode.trim());
+    }
+}
+
+function createParty() {
+    io.send("CREATE_PARTY");
+    showNotification("Creating party...");
+}
+
+var isGuestMode = true;
+var guestName = null;
+
+function generateGuestName() {
+    var randomNum = Math.floor(10000 + Math.random() * 90000);
+    return "Guest#" + randomNum;
+}
+
+function initGuestMode() {
+    if (!currentAccount) {
+        isGuestMode = true;
+        if (!guestName) {
+            guestName = generateGuestName();
+        }
+        var nameInputEl = document.getElementById("nameInput");
+        if (nameInputEl) {
+            nameInputEl.value = guestName;
+            nameInputEl.classList.add("guest-mode");
+            nameInputEl.readOnly = true;
+        }
+    } else {
+        isGuestMode = false;
+        var nameInputEl = document.getElementById("nameInput");
+        if (nameInputEl) {
+            nameInputEl.classList.remove("guest-mode");
+            nameInputEl.readOnly = false;
+        }
+    }
+}
+
+function updateRealTimeStats() {
+    if (player && currentAccount) {
+        var accountScore = document.getElementById("accountScore");
+        if (accountScore) {
+            accountScore.textContent = formatNumber(player.points || 0);
+        }
+        var accountKills = document.getElementById("accountKills");
+        if (accountKills) {
+            accountKills.textContent = formatNumber(player.kills || 0);
+        }
+    }
 }
 
 var mathPI = Math.PI;
@@ -478,6 +558,7 @@ var mainMenu = document.getElementById("mainMenu");
 var enterGameButton = document.getElementById("enterGame");
 var partyButton = document.getElementById("partyButton");
 var joinPartyButton = document.getElementById("joinPartyButton");
+var createPartyButton = document.getElementById("createPartyButton");
 var settingsButton = document.getElementById("settingsButton");
 var settingsButtonTitle = settingsButton.getElementsByTagName("span")[0];
 var allianceButton = document.getElementById("allianceButton");
@@ -658,6 +739,14 @@ function bindEvents() {
         }, 10);
     });
     UTILS.hookTouchEvents(joinPartyButton);
+    if (createPartyButton) {
+        createPartyButton.onclick = UTILS.checkTrusted(function () {
+            setTimeout(function () {
+                createParty();
+            }, 10);
+        });
+        UTILS.hookTouchEvents(createPartyButton);
+    }
     settingsButton.onclick = UTILS.checkTrusted(function () {
         toggleSettings();
     });
@@ -2376,6 +2465,7 @@ function updateStatusDisplay() {
     woodDisplay.innerText = player.wood;
     stoneDisplay.innerText = player.stone;
     killCounter.innerText = player.kills;
+    updateRealTimeStats();
 }
 
 var iconSprites = {};
@@ -4080,10 +4170,12 @@ function startGame() {
     loadIcons();
     loadingText.style.display = "none";
     menuCardHolder.style.display = "flex";
-    nameInput.value = getSavedVal("moo_name") || "";
     prepareUI();
     initPerformanceDisplay();
     loadSavedAccount();
+    if (!currentAccount) {
+        initGuestMode();
+    }
 }
 
 prepareMenuBackground();
