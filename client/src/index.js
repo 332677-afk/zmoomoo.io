@@ -456,6 +456,11 @@ function logoutAccount() {
     showNotification("Logged out");
 }
 
+window.showAuthModal = showAuthModal;
+window.hideAuthModal = hideAuthModal;
+window.submitAuth = submitAuth;
+window.logoutAccount = logoutAccount;
+
 function showNotification(message) {
     var notification = document.getElementById("notificationDisplay");
     if (notification) {
@@ -498,6 +503,10 @@ function createParty() {
     io.send("CREATE_PARTY");
     showNotification("Creating party...");
 }
+
+window.joinParty = joinParty;
+window.createParty = createParty;
+window.showNotification = showNotification;
 
 var isGuestMode = true;
 var guestName = null;
