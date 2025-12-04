@@ -27,7 +27,7 @@ This is a fully working MooMoo.io private server implementation with extensive a
 ## Admin Commands Reference
 
 ### Login & Info
-- `/login [password]` - Login as admin (default: zahrefrida, set via MODERATOR_PASSWORD env)
+- `/login` - Activate admin mode (requires logged-in account with Admin level or higher)
 - `/id` or `/ids` - Show player IDs (use `/id toggle` for permanent display)
 
 ### Combat Commands
@@ -161,16 +161,21 @@ console.log(MooMoo.myPlayer.x, MooMoo.myPlayer.y);
 ```
 
 ## Recent Changes (December 4, 2025)
+- **Security Fix - Admin /login Command**:
+  - The /login command now requires users to be logged into an account with Admin level (4) or higher
+  - Non-admin accounts cannot use /login to gain admin privileges anymore
+  - Auto-admin is granted on account login for accounts with adminLevel >= 4
+- **UI Simplification**:
+  - Rank display uses simple gray colors for all ranks (no gradients)
+  - Removed icons from stats panel except clock icons for Playtime and Joined date
+  - Removed Tribe and Tribes Created from the stats panel display
+- **Zahre Account**: Password updated to new secure password
 - **Comprehensive Account System Implementation**:
-  - Added detailed stats tracking: kills, deaths, score, highest score, playtime, tribes created, current tribe
-  - Auto-admin login: Users with admin rank automatically receive admin powers when logging in (no /login needed)
-  - Enhanced stats panel in UI showing all account details without exposing passwords
+  - Added detailed stats tracking: kills, deaths, score, highest score, playtime
+  - Auto-admin login: Users with admin rank automatically receive admin powers when logging in
   - Database schema updated with new fields (score, highestScore, tribesCreated, currentTribe, playTime as bigint)
   - Session tracking for kills, deaths, and score - stats persist across reconnects
-  - Tribe creation and membership tracking integrated with accounts
 - **Admin Level Hierarchy**: None(0), Helper(1), Moderator(2), Staff(3), Admin(4), Owner(5), Zahre(6)
-- **Special Account Created**: Zahre account (ID: XUJP2NIB) with highest admin rank (level 6)
-  - Temporary password: ZahreAdmin2025 (please change this after first login)
 - Fixed packet identifier validation that was blocking AUTH/REGISTER packets
 - Increased max packet identifier length from 3 to 16 characters
 - Fixed cache invalidation bug in admin level changes
