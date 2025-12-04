@@ -1063,15 +1063,19 @@ const PanelUI = (() => {
         dom.youtuberLinks = document.getElementById('youtuberLinks');
         dom.versionElement = document.getElementById('versionText');
 
-        if (!dom.infoButton || !dom.infoPanel || !dom.youtuberButton || !dom.youtuberPanel) {
-            return;
+        if (dom.infoButton && dom.infoPanel) {
+            dom.infoPanel.classList.add('hidden');
+            bindToggle('info');
         }
 
-        dom.infoPanel.classList.add('hidden');
-        dom.youtuberPanel.classList.add('hidden');
+        if (dom.youtuberButton && dom.youtuberPanel) {
+            dom.youtuberPanel.classList.add('hidden');
+            bindToggle('youtuber');
+        }
 
-        bindToggle('info');
-        bindToggle('youtuber');
+        if (!dom.youtuberButton && !dom.infoButton) {
+            return;
+        }
 
         document.addEventListener('click', handleDocumentClick);
         document.addEventListener('mousemove', handleMouseMove);
@@ -1109,9 +1113,9 @@ const PanelUI = (() => {
     function handleDocumentClick(event) {
         for (let i = 0; i < keys.length; i++) {
             const key = keys[i];
-            if (state[key]) {
-                const panel = dom[key + 'Panel'];
-                const button = dom[key + 'Button'];
+            const panel = dom[key + 'Panel'];
+            const button = dom[key + 'Button'];
+            if (state[key] && panel && button) {
                 if (!panel.contains(event.target) && !button.contains(event.target)) {
                     setPanelState(key, false);
                 }
@@ -1126,15 +1130,18 @@ const PanelUI = (() => {
     }
 
     function updateButtonOpacity(key, event) {
+        const button = dom[key + 'Button'];
+        if (!button) return;
+        
         if (state[key]) {
-            dom[key + 'Button'].style.opacity = '1';
+            button.style.opacity = '1';
             return;
         }
-        const rect = dom[key + 'Button'].getBoundingClientRect();
+        const rect = button.getBoundingClientRect();
         const centerX = rect.left + rect.width / 2;
         const centerY = rect.top + rect.height / 2;
         const distance = Math.hypot(event.clientX - centerX, event.clientY - centerY);
-        dom[key + 'Button'].style.opacity = distance > fadeRadius ? '0.3' : '1';
+        button.style.opacity = distance > fadeRadius ? '0.3' : '1';
     }
 
     function renderYoutuberLinks() {
