@@ -235,7 +235,7 @@ wss.on("connection", async (socket, req) => {
                     ? rawType.toString()
                     : null;
 
-            if (!t || t.length === 0 || t.length > 3) {
+            if (!t || t.length === 0 || t.length > 16) {
                 handleInvalidPacket("invalid packet identifier");
                 return;
             }

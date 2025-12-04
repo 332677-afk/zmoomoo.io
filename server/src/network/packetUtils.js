@@ -70,7 +70,7 @@ function normalizePacketType(rawType) {
     } else if (typeof rawType === "number" || typeof rawType === "bigint") {
         normalized = rawType.toString();
     }
-    if (!normalized || normalized.length === 0 || normalized.length > 3) {
+    if (!normalized || normalized.length === 0 || normalized.length > 16) {
         throw new InvalidPacketError("invalid packet identifier");
     }
     return normalized;

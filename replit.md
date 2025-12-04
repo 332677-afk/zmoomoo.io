@@ -160,6 +160,11 @@ MooMoo.PacketInterceptor.addCallback('client', (packet) => {
 console.log(MooMoo.myPlayer.x, MooMoo.myPlayer.y);
 ```
 
+## Recent Changes (December 4, 2025)
+- Fixed packet identifier validation that was blocking AUTH/REGISTER packets
+- Increased max packet identifier length from 3 to 16 characters
+- Fixed cache invalidation bug in admin level changes
+
 ## Recent Changes (December 3, 2025)
 - Added MooMoo.js modding API for advanced game customization
 - Packet intercepting for client and server messages
