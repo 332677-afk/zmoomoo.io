@@ -28,7 +28,11 @@ const SESSION_CHECK_INTERVAL = 60 * 1000;
 const app = e();
 
 function getAllowedOrigins() {
-    const origins = [];
+    const origins = [
+        'http://localhost:5000',
+        'http://127.0.0.1:5000',
+        'http://0.0.0.0:5000'
+    ];
     
     if (process.env.REPLIT_DEPLOYMENT_URL) {
         origins.push(process.env.REPLIT_DEPLOYMENT_URL);
@@ -41,7 +45,7 @@ function getAllowedOrigins() {
         domains.forEach(d => origins.push(`https://${d.trim()}`));
     }
     
-    return origins.length > 0 ? origins : null;
+    return origins;
 }
 
 const allowedOrigins = getAllowedOrigins();
@@ -80,10 +84,6 @@ app.use(cors({
             return callback(null, true);
         }
         
-        if (allowedOrigins === null) {
-            return callback(null, false);
-        }
-        
         if (allowedOrigins.some(allowed => origin === allowed || origin.endsWith(allowed.replace('https://', '.')))) {
             return callback(null, true);
         }
@@ -93,7 +93,7 @@ app.use(cors({
     },
     methods: ['GET', 'POST', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: allowedOrigins !== null,
+    credentials: true,
     maxAge: 86400
 }));
 
