@@ -356,6 +356,40 @@ export class AccountManager {
         return { isAdmin: false, adminLevel: null };
     }
 
+    async updatePassword(username, newPassword) {
+        if (!username || typeof username !== 'string') {
+            return { success: false, error: 'Username is required' };
+        }
+        if (!newPassword || typeof newPassword !== 'string') {
+            return { success: false, error: 'Password is required' };
+        }
+        if (newPassword.length < 8 || newPassword.length > 30) {
+            return { success: false, error: 'Password must be 8-30 characters' };
+        }
+
+        try {
+            const account = await this.getAccount(username);
+            if (!account) {
+                return { success: false, error: 'Account not found' };
+            }
+
+            const salt = await bcrypt.genSalt(12);
+            const passwordHash = await bcrypt.hash(newPassword, salt);
+
+            await db.update(accounts)
+                .set({ passwordHash: passwordHash })
+                .where(eq(accounts.username, username.toLowerCase()));
+            
+            this.invalidateCache(username);
+            
+            console.log(`[Account] Password updated for ${username}`);
+            return { success: true };
+        } catch (error) {
+            console.error('[Account] Error updating password:', error);
+            return { success: false, error: 'Failed to update password' };
+        }
+    }
+
     async setAdminLevel(username, level) {
         try {
             const account = await this.getAccount(username);

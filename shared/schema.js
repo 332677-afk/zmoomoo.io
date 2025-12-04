@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, bigint, timestamp, varchar } from "drizzle-orm/pg-core";
 
 export const AdminLevel = {
     None: 0,
@@ -20,7 +20,11 @@ export const accounts = pgTable("accounts", {
     balance: integer("balance").default(0).notNull(),
     kills: integer("kills").default(0).notNull(),
     deaths: integer("deaths").default(0).notNull(),
-    playTime: integer("play_time").default(0).notNull(),
+    playTime: bigint("play_time", { mode: "number" }).default(0).notNull(),
+    score: integer("score").default(0).notNull(),
+    highestScore: integer("highest_score").default(0).notNull(),
+    tribesCreated: integer("tribes_created").default(0).notNull(),
+    currentTribe: varchar("current_tribe", { length: 30 }),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     lastLogin: timestamp("last_login"),
     ipAddress: varchar("ip_address", { length: 45 }),

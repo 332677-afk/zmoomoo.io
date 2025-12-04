@@ -300,33 +300,34 @@ export class AdminCommands {
     }
 
     handleLogin(params, player) {
-        const password = params.join(' ');
-        const correctPassword = process.env.MODERATOR_PASSWORD || 'zahrefrida';
-        
-        if (password === correctPassword) {
-            player.isAdmin = true;
-            player.adminLevel = 'full';
-            
-            const allPlayers = this.game.players
-                .filter(p => p.alive)
-                .map(p => ({
-                    sid: p.sid,
-                    name: p.name,
-                    x: p.x,
-                    y: p.y,
-                    health: Math.round(p.health),
-                    maxHealth: Math.round(p.maxHealth)
-                }));
-            
-            this.game.server.send(player.id, 'ADMIN_LOGIN', allPlayers);
-            
-            return {
-                success: true,
-                message: `Admin access granted! Your ID: ${player.sid}. Sending player list...`
-            };
+        if (!player.account) {
+            return { success: false, message: 'You must be logged into an account to use admin commands' };
         }
         
-        return { success: false, message: 'Incorrect password' };
+        if (!player.account.adminLevel || player.account.adminLevel < 4) {
+            return { success: false, message: 'You do not have admin privileges on this account' };
+        }
+        
+        player.isAdmin = true;
+        player.adminLevel = player.account.adminLevel >= 4 ? 'full' : 'limited';
+        
+        const allPlayers = this.game.players
+            .filter(p => p.alive)
+            .map(p => ({
+                sid: p.sid,
+                name: p.name,
+                x: p.x,
+                y: p.y,
+                health: Math.round(p.health),
+                maxHealth: Math.round(p.maxHealth)
+            }));
+        
+        this.game.server.send(player.id, 'ADMIN_LOGIN', allPlayers);
+        
+        return {
+            success: true,
+            message: `Admin access activated! Your ID: ${player.sid}. Welcome back, ${player.account.displayName}.`
+        };
     }
 
     handleShowIDs(params, player) {

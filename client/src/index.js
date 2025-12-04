@@ -201,8 +201,6 @@ function updateAccountUI() {
     var accountDeaths = document.getElementById("accountDeaths");
     var accountScore = document.getElementById("accountScore");
     var accountHighScore = document.getElementById("accountHighScore");
-    var accountTribe = document.getElementById("accountTribe");
-    var accountTribesCreated = document.getElementById("accountTribesCreated");
     var accountPlayTime = document.getElementById("accountPlayTime");
     var accountCreatedAt = document.getElementById("accountCreatedAt");
     
@@ -221,8 +219,6 @@ function updateAccountUI() {
         if (accountDeaths) accountDeaths.textContent = formatNumber(currentAccount.deaths || 0);
         if (accountScore) accountScore.textContent = formatNumber(currentAccount.score || 0);
         if (accountHighScore) accountHighScore.textContent = formatNumber(currentAccount.highestScore || 0);
-        if (accountTribe) accountTribe.textContent = currentAccount.currentTribe || "None";
-        if (accountTribesCreated) accountTribesCreated.textContent = currentAccount.tribesCreated || 0;
         if (accountPlayTime) accountPlayTime.textContent = currentAccount.formattedPlayTime || formatPlayTime(currentAccount.playTime || 0);
         if (accountCreatedAt) accountCreatedAt.textContent = currentAccount.formattedCreatedAt || formatDate(currentAccount.createdAt);
     } else {
