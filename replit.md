@@ -161,6 +161,20 @@ console.log(MooMoo.myPlayer.x, MooMoo.myPlayer.y);
 ```
 
 ## Recent Changes (December 4, 2025)
+- **Guest Mode System**:
+  - Non-logged-in players automatically get "Guest#XXXXX" names (random 5-digit numbers)
+  - Name input field is greyed out and read-only for guests
+  - "Guest" label shown above the sign-in buttons
+- **Account ID Persistence**:
+  - Username "zahre" now always gets preserved account ID "XUJP2NIB"
+  - Prevents ID churn on re-authentication for special accounts
+- **Real-Time Stats**:
+  - Account stats panel (score, kills) now updates live during gameplay
+  - No need to refresh to see current statistics
+- **Create Party Button**:
+  - Added visible "Create Party" button in the bottom-right corner of main menu
+  - Party system with unique 6-character join codes
+  - Server-side party management with CREATE_PARTY/JOIN_PARTY handlers
 - **Security Fix - Admin /login Command**:
   - The /login command now requires users to be logged into an account with Admin level (4) or higher
   - Non-admin accounts cannot use /login to gain admin privileges anymore
