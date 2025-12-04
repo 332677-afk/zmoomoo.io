@@ -161,8 +161,8 @@ function connectSocket() {
 var currentAccount = null;
 
 function handleAuthResult(data) {
-    if (data && data[0]) {
-        var result = data[0];
+    var result = data;
+    if (result) {
         if (result.success) {
             currentAccount = result.account;
             saveVal("moo_account", JSON.stringify(currentAccount));
@@ -176,8 +176,8 @@ function handleAuthResult(data) {
 }
 
 function handleRegisterResult(data) {
-    if (data && data[0]) {
-        var result = data[0];
+    var result = data;
+    if (result) {
         if (result.success) {
             currentAccount = result.account;
             saveVal("moo_account", JSON.stringify(currentAccount));
