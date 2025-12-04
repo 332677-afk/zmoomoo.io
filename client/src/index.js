@@ -73,8 +73,68 @@ if (typeof window !== "undefined" && typeof fetch === "function") {
 
 window.onload = function () {
     showLoadingText("Connecting...");
+    initAuthButtons();
     connectSocketIfReady();
 };
+
+function initAuthButtons() {
+    var signInBtn = document.querySelector('.menuButton.primaryButton[onclick*="showAuthModal(true)"]');
+    var createAccountBtn = document.querySelector('.menuButton.secondaryButton[onclick*="showAuthModal(false)"]');
+    var authSubmitBtn = document.getElementById('authSubmitBtn');
+    var authCloseBtn = document.getElementById('authCloseBtn');
+    var logoutBtn = document.getElementById('logoutBtn');
+    
+    if (signInBtn) {
+        signInBtn.removeAttribute('onclick');
+        signInBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            showAuthModal(true);
+        });
+    }
+    
+    if (createAccountBtn) {
+        createAccountBtn.removeAttribute('onclick');
+        createAccountBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            showAuthModal(false);
+        });
+    }
+    
+    if (authSubmitBtn) {
+        authSubmitBtn.removeAttribute('onclick');
+        authSubmitBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            submitAuth();
+        });
+    }
+    
+    if (authCloseBtn) {
+        authCloseBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            hideAuthModal();
+        });
+    }
+    
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            logoutAccount();
+        });
+    }
+    
+    var authModal = document.getElementById('authModal');
+    if (authModal) {
+        authModal.addEventListener('click', function(e) {
+            if (e.target === authModal) {
+                hideAuthModal();
+            }
+        });
+    }
+    
+    console.log('[Auth] Button listeners initialized');
+}
 var connected = false;
 var startedConnecting = false;
 
