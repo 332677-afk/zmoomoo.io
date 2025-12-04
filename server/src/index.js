@@ -712,10 +712,12 @@ wss.on("connection", async (socket, req) => {
                         if (result.success) {
                             if (player.account) {
                                 accountManager.removeSession(player.account.username);
+                                await accountManager.saveClientPlayTime(player.id);
                             }
 
                             player.account = result.account;
                             player.accountUsername = result.account.username;
+                            player.joinedAt = Date.now();
                             
                             if (result.account.adminLevel > AdminLevel.None) {
                                 player.isAdmin = true;
@@ -723,6 +725,7 @@ wss.on("connection", async (socket, req) => {
                             }
 
                             accountManager.addSession(username);
+                            accountManager.trackClientSession(player.id, result.account.username, player.joinedAt);
 
                             emit("AUTH_RESULT", { 
                                 success: true, 
@@ -777,25 +780,25 @@ wss.on("connection", async (socket, req) => {
                     break;
                 }
                 default:
-                    handleInvalidPacket(`unknown packet type "${t}"`);
-                    return;
+                    console.log(`Unknown packet: ${t}`);
+                    break;
             }
 
         } catch(e) {
             console.error("Error processing message from player:", e);
-            handleInvalidPacket("exception during packet processing");
 
             
         }
 
     });
 
-    socket.on("close", reason => {
+    socket.on("close", async reason => {
 
         colimit.down(addr);
 
         if (player.accountUsername) {
             accountManager.removeSession(player.accountUsername);
+            await accountManager.saveClientPlayTime(player.id);
         }
 
         if (player.team) {

@@ -17,17 +17,34 @@ function generateAccountId() {
 export class AccountManager {
     constructor() {
         this.sessions = new Map();
-        console.log('[Account] Database-backed AccountManager initialized');
+        this.accountCache = new Map();
+        this.clientSessions = new Map();
+        console.log('[Account] Database-backed AccountManager initialized with caching');
     }
 
-    async getAccount(username) {
+    async getAccount(username, useCache = true) {
         if (!username || typeof username !== 'string') return null;
+        const usernameLower = username.toLowerCase();
+        
+        if (useCache && this.accountCache.has(usernameLower)) {
+            return this.accountCache.get(usernameLower);
+        }
+        
         try {
-            const [account] = await db.select().from(accounts).where(eq(accounts.username, username.toLowerCase()));
+            const [account] = await db.select().from(accounts).where(eq(accounts.username, usernameLower));
+            if (account) {
+                this.accountCache.set(usernameLower, account);
+            }
             return account || null;
         } catch (error) {
             console.error('[Account] Error getting account:', error);
             return null;
+        }
+    }
+    
+    invalidateCache(username) {
+        if (username) {
+            this.accountCache.delete(username.toLowerCase());
         }
     }
 
@@ -188,12 +205,34 @@ export class AccountManager {
                 await db.update(accounts)
                     .set(updates)
                     .where(eq(accounts.username, username.toLowerCase()));
+                this.invalidateCache(username);
             }
             return true;
         } catch (error) {
             console.error('[Account] Error updating stats:', error);
             return false;
         }
+    }
+    
+    trackClientSession(playerId, username, joinedAt) {
+        this.clientSessions.set(playerId, {
+            username,
+            joinedAt: joinedAt || Date.now(),
+            loggedIn: true
+        });
+    }
+    
+    async saveClientPlayTime(playerId) {
+        const session = this.clientSessions.get(playerId);
+        if (session && session.loggedIn && session.username && session.joinedAt) {
+            const playTime = Date.now() - session.joinedAt;
+            await this.updateAccountStats(session.username, { playTime });
+            this.clientSessions.delete(playerId);
+        }
+    }
+    
+    removeClientSession(playerId) {
+        this.clientSessions.delete(playerId);
     }
 
     async setAdminLevel(username, level) {
