@@ -2768,3 +2768,104 @@ span {
         left: 0;
         right: 0;
 }
+
+.keybindGrid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+}
+
+.keybindItem {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        background: #f8f8f8;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+}
+
+.keybindLabel {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: #333;
+}
+
+.keybindLabel i {
+        font-size: 16px;
+        color: #7ee559;
+}
+
+.keybindButton {
+        padding: 6px 12px;
+        min-width: 50px;
+        background: #fff;
+        border: 2px solid #7ee559;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #333;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-transform: uppercase;
+}
+
+.keybindButton:hover {
+        background: #7ee559;
+        color: #fff;
+}
+
+.keybindButton.listening {
+        background: #ffeb3b;
+        border-color: #ffc107;
+        animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+}
+
+.partyButtonsGrid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+}
+
+.partyButton {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px 16px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+}
+
+.partyButton i {
+        font-size: 20px;
+}
+
+.joinPartyBtn {
+        background: #2196F3;
+        color: #fff;
+}
+
+.joinPartyBtn:hover {
+        background: #1976D2;
+}
+
+.createPartyBtn {
+        background: #4CAF50;
+        color: #fff;
+}
+
+.createPartyBtn:hover {
+        background: #388E3C;
+}

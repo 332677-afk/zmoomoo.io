@@ -200,6 +200,12 @@ function handlePartyCreated(data) {
         if (partyBtnSpan) {
             partyBtnSpan.innerText = result.code;
         }
+        var partyCodeDisplay = document.getElementById('partyCodeDisplay');
+        var partyCodeValue = document.getElementById('partyCodeValue');
+        if (partyCodeDisplay && partyCodeValue) {
+            partyCodeValue.textContent = result.code;
+            partyCodeDisplay.style.display = 'block';
+        }
     }
 }
 
@@ -212,6 +218,103 @@ function handlePartyJoinResult(data) {
             showNotification("Failed to join party: " + (result.error || "Unknown error"));
         }
     }
+}
+
+var customKeybinds = {
+    moveUp: 'w',
+    moveLeft: 'a',
+    moveDown: 's',
+    moveRight: 'd',
+    spike: 'v',
+    trap: 'f',
+    windmill: 'n',
+    turret: 'h',
+    attack: 'click'
+};
+
+var activeKeybindButton = null;
+
+function loadKeybindSettings() {
+    var savedKeybinds = getSavedVal("moo_keybinds");
+    if (savedKeybinds) {
+        try {
+            var parsed = JSON.parse(savedKeybinds);
+            Object.assign(customKeybinds, parsed);
+        } catch (e) {
+            console.log("Failed to load keybinds");
+        }
+    }
+    if (typeof updateMoveKeysFromBindings === 'function') {
+        updateMoveKeysFromBindings();
+    }
+}
+
+function saveKeybindSettings() {
+    saveVal("moo_keybinds", JSON.stringify(customKeybinds));
+    if (typeof updateMoveKeysFromBindings === 'function') {
+        updateMoveKeysFromBindings();
+    }
+}
+
+function initKeybindSettings() {
+    loadKeybindSettings();
+    
+    var keybindButtons = document.querySelectorAll('.keybindButton');
+    keybindButtons.forEach(function(button) {
+        var keybindId = button.id.replace('keybind_', '');
+        if (customKeybinds[keybindId]) {
+            button.textContent = customKeybinds[keybindId].toUpperCase();
+            button.setAttribute('data-key', customKeybinds[keybindId]);
+        }
+        
+        button.addEventListener('click', function(e) {
+            e.stopPropagation();
+            
+            if (activeKeybindButton) {
+                activeKeybindButton.classList.remove('listening');
+            }
+            
+            activeKeybindButton = this;
+            this.classList.add('listening');
+            this.textContent = 'Press key...';
+        });
+    });
+    
+    document.addEventListener('keydown', function(e) {
+        if (activeKeybindButton) {
+            e.preventDefault();
+            var keybindId = activeKeybindButton.id.replace('keybind_', '');
+            var keyName = e.key.toLowerCase();
+            
+            if (keyName === 'escape') {
+                activeKeybindButton.classList.remove('listening');
+                activeKeybindButton.textContent = customKeybinds[keybindId].toUpperCase();
+                activeKeybindButton = null;
+                return;
+            }
+            
+            customKeybinds[keybindId] = keyName;
+            activeKeybindButton.textContent = keyName.toUpperCase();
+            activeKeybindButton.setAttribute('data-key', keyName);
+            activeKeybindButton.classList.remove('listening');
+            activeKeybindButton = null;
+            saveKeybindSettings();
+            showNotification("Keybind updated!");
+        }
+    });
+    
+    document.addEventListener('click', function(e) {
+        if (activeKeybindButton && !e.target.classList.contains('keybindButton')) {
+            var keybindId = activeKeybindButton.id.replace('keybind_', '');
+            activeKeybindButton.classList.remove('listening');
+            activeKeybindButton.textContent = customKeybinds[keybindId].toUpperCase();
+            activeKeybindButton = null;
+        }
+    });
+}
+
+function getKeybind(action) {
+    return customKeybinds[action] || null;
 }
 
 function updateAccountUI() {
@@ -747,6 +850,26 @@ function bindEvents() {
         });
         UTILS.hookTouchEvents(createPartyButton);
     }
+    
+    var settingsJoinPartyBtn = document.getElementById('settingsJoinPartyBtn');
+    var settingsCreatePartyBtn = document.getElementById('settingsCreatePartyBtn');
+    
+    if (settingsJoinPartyBtn) {
+        settingsJoinPartyBtn.onclick = UTILS.checkTrusted(function () {
+            joinParty();
+        });
+        UTILS.hookTouchEvents(settingsJoinPartyBtn);
+    }
+    
+    if (settingsCreatePartyBtn) {
+        settingsCreatePartyBtn.onclick = UTILS.checkTrusted(function () {
+            createParty();
+        });
+        UTILS.hookTouchEvents(settingsCreatePartyBtn);
+    }
+    
+    initKeybindSettings();
+    
     settingsButton.onclick = UTILS.checkTrusted(function () {
         toggleSettings();
     });
@@ -1963,16 +2086,40 @@ function getAttackDir() {
 }
 
 var keys = {};
-var moveKeys = {
-    87: [0, -1],
-    38: [0, -1],
-    83: [0, 1],
-    40: [0, 1],
-    65: [-1, 0],
-    37: [-1, 0],
-    68: [1, 0],
-    39: [1, 0]
-};
+var moveKeys = {};
+
+function getKeyCharCode(key) {
+    if (!key || key === 'click') return 0;
+    var k = key.toLowerCase();
+    if (k.length === 1) {
+        return k.charCodeAt(0) - 32;
+    }
+    var specialKeys = {
+        'arrowup': 38, 'arrowdown': 40, 'arrowleft': 37, 'arrowright': 39,
+        'space': 32, 'escape': 27, 'enter': 13
+    };
+    return specialKeys[k] || 0;
+}
+
+function updateMoveKeysFromBindings() {
+    moveKeys = {};
+    var upKey = getKeyCharCode(customKeybinds.moveUp);
+    var downKey = getKeyCharCode(customKeybinds.moveDown);
+    var leftKey = getKeyCharCode(customKeybinds.moveLeft);
+    var rightKey = getKeyCharCode(customKeybinds.moveRight);
+    
+    if (upKey) moveKeys[upKey] = [0, -1];
+    if (downKey) moveKeys[downKey] = [0, 1];
+    if (leftKey) moveKeys[leftKey] = [-1, 0];
+    if (rightKey) moveKeys[rightKey] = [1, 0];
+    
+    moveKeys[38] = [0, -1];
+    moveKeys[40] = [0, 1];
+    moveKeys[37] = [-1, 0];
+    moveKeys[39] = [1, 0];
+}
+
+updateMoveKeysFromBindings();
 
 var keyCodeMap = {
     'KeyW': 87, 'ArrowUp': 38,

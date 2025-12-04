@@ -381,6 +381,102 @@
                                             </div>
                                         </div>
                                     </div>
+
+                                    <div class="contentSection">
+                                        <div class="sectionTitle">
+                                            <i class="material-icons">keyboard</i>
+                                            <span>Change Settings</span>
+                                        </div>
+                                        <div class="menuText" style="margin-bottom: 12px; font-size: 13px; color: #666;">
+                                            This is where you can change the keybinds of your settings to your liking
+                                        </div>
+                                        <div class="keybindGrid">
+                                            <div class="keybindItem">
+                                                <div class="keybindLabel">
+                                                    <i class="material-icons">gamepad</i>
+                                                    <span>Move Up</span>
+                                                </div>
+                                                <button class="keybindButton" id="keybind_moveUp" data-key="w">W</button>
+                                            </div>
+                                            <div class="keybindItem">
+                                                <div class="keybindLabel">
+                                                    <i class="material-icons">gamepad</i>
+                                                    <span>Move Left</span>
+                                                </div>
+                                                <button class="keybindButton" id="keybind_moveLeft" data-key="a">A</button>
+                                            </div>
+                                            <div class="keybindItem">
+                                                <div class="keybindLabel">
+                                                    <i class="material-icons">gamepad</i>
+                                                    <span>Move Down</span>
+                                                </div>
+                                                <button class="keybindButton" id="keybind_moveDown" data-key="s">S</button>
+                                            </div>
+                                            <div class="keybindItem">
+                                                <div class="keybindLabel">
+                                                    <i class="material-icons">gamepad</i>
+                                                    <span>Move Right</span>
+                                                </div>
+                                                <button class="keybindButton" id="keybind_moveRight" data-key="d">D</button>
+                                            </div>
+                                            <div class="keybindItem">
+                                                <div class="keybindLabel">
+                                                    <i class="material-icons">fence</i>
+                                                    <span>Place Spike</span>
+                                                </div>
+                                                <button class="keybindButton" id="keybind_spike" data-key="v">V</button>
+                                            </div>
+                                            <div class="keybindItem">
+                                                <div class="keybindLabel">
+                                                    <i class="material-icons">dashboard</i>
+                                                    <span>Place Trap/Boost</span>
+                                                </div>
+                                                <button class="keybindButton" id="keybind_trap" data-key="f">F</button>
+                                            </div>
+                                            <div class="keybindItem">
+                                                <div class="keybindLabel">
+                                                    <i class="material-icons">toys</i>
+                                                    <span>Place Windmill</span>
+                                                </div>
+                                                <button class="keybindButton" id="keybind_windmill" data-key="n">N</button>
+                                            </div>
+                                            <div class="keybindItem">
+                                                <div class="keybindLabel">
+                                                    <i class="material-icons">security</i>
+                                                    <span>Place Turret</span>
+                                                </div>
+                                                <button class="keybindButton" id="keybind_turret" data-key="h">H</button>
+                                            </div>
+                                            <div class="keybindItem">
+                                                <div class="keybindLabel">
+                                                    <i class="material-icons">mouse</i>
+                                                    <span>Attack</span>
+                                                </div>
+                                                <button class="keybindButton" id="keybind_attack" data-key="click">Click</button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="contentSection">
+                                        <div class="sectionTitle">
+                                            <i class="material-icons">group</i>
+                                            <span>Party</span>
+                                        </div>
+                                        <div class="partyButtonsGrid">
+                                            <button id="settingsJoinPartyBtn" class="partyButton joinPartyBtn">
+                                                <i class="material-icons">login</i>
+                                                <span>Join Party</span>
+                                            </button>
+                                            <button id="settingsCreatePartyBtn" class="partyButton createPartyBtn">
+                                                <i class="material-icons">add_circle</i>
+                                                <span>Create Party</span>
+                                            </button>
+                                        </div>
+                                        <div id="partyCodeDisplay" style="display: none; margin-top: 10px; padding: 10px; background: #e8f5e9; border-radius: 8px; text-align: center;">
+                                            <div style="font-size: 12px; color: #666; margin-bottom: 4px;">Your Party Code:</div>
+                                            <div id="partyCodeValue" style="font-size: 18px; font-weight: bold; color: #4CAF50; font-family: monospace;"></div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -478,9 +574,9 @@
                 style="font-size:30px;vertical-align:middle">&#xE8B8;</i> <span>Settings</span></div>
         <div id="partyButton" class="inParty"><span></span> <i class="material-icons"
                 style="font-size:30px;vertical-align:middle">&#xE8D3;</i></div>
-        <div id="createPartyButton" class="ytLink"><span>Create Party</span> <i class="material-icons"
+        <div id="createPartyButton" class="ytLink" style="display:none;"><span>Create Party</span> <i class="material-icons"
                 style="font-size:30px;vertical-align:middle">&#xE7FB;</i></div>
-        <div id="joinPartyButton" class="ytLink"><span>Join Party</span> <i class="material-icons"
+        <div id="joinPartyButton" class="ytLink" style="display:none;"><span>Join Party</span> <i class="material-icons"
                 style="font-size:30px;vertical-align:middle">&#xE0DA;</i></div>
 
         <div id="linksContainer2" class="legacyHidden"><a href="./docs/versions.txt" target="_blank"
