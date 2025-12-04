@@ -22,6 +22,11 @@ export class Game {
     ais = [];
     projectiles = [];
     game_objects = [];
+    antiCheat = null;
+
+    setAntiCheat(antiCheatController) {
+        this.antiCheat = antiCheatController;
+    }
 
     server = {
         broadcast: async (type, ...data) => {
@@ -90,9 +95,28 @@ export class Game {
             const minimap_ext = [];
 
             for (const player of this.players) {
+                const prevX = player.x;
+                const prevY = player.y;
 
                 player.update(delta);
                 player.iconIndex = 0;
+
+                if (this.antiCheat && player.alive && !player.isAdmin && !player.noclipMode) {
+                    const movementResult = this.antiCheat.validateMovement(player, player.x, player.y, delta);
+                    
+                    if (!movementResult.valid) {
+                        player.x = prevX;
+                        player.y = prevY;
+                        player.xVel = 0;
+                        player.yVel = 0;
+                        
+                        if (movementResult.suspicionScore > 30) {
+                            this.antiCheat.checkAndEnforce(player.id, player.socket, player.ipAddress);
+                        }
+                    }
+                    
+                    this.antiCheat.setPlayerActive(player.id, player.alive);
+                }
 
                 if (!player.alive) continue;
 

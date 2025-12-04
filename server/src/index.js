@@ -20,6 +20,7 @@ import { AccountManager, AdminLevel, sessionStore } from "./moomoo/modules/Accou
 import { fileURLToPath } from "node:url";
 import { packetValidator, MAX_MESSAGE_SIZE } from "./security/packetValidator.js";
 import { rateLimiter, ESCALATION_LEVELS } from "./security/rateLimiter.js";
+import { createAntiCheatController, SUSPICION_THRESHOLDS } from "./security/antiCheat/index.js";
 
 const SESSION_CLEANUP_INTERVAL = 5 * 60 * 1000;
 const SESSION_CHECK_INTERVAL = 60 * 1000;
@@ -162,6 +163,46 @@ if (!fs.existsSync(INDEX)) {
 const game = new Game;
 const adminCommands = new AdminCommands(game);
 const accountManager = new AccountManager();
+
+const antiCheat = createAntiCheatController(config, items);
+game.setAntiCheat(antiCheat);
+
+antiCheat.setCallbacks({
+    onWarning: (playerId, socket, data) => {
+        if (socket && socket.readyState === 1) {
+            socket.send(JSON.stringify(['ANTICHEAT_WARNING', [{ 
+                message: 'Suspicious activity detected. Please play fairly.',
+                score: data.score,
+                warningCount: data.warningCount
+            }]]));
+        }
+    },
+    onKick: (playerId, socket, data) => {
+        console.log(`[AntiCheat] Kicking player ${playerId} - Score: ${data.score}`);
+        if (socket && socket.readyState === 1) {
+            socket.send(JSON.stringify(['ANTICHEAT_KICK', [{ 
+                message: 'You have been kicked for suspicious activity.',
+                reason: 'anticheat'
+            }]]));
+            setTimeout(() => {
+                try { socket.close(4010); } catch (e) {}
+            }, 100);
+        }
+    },
+    onBan: (playerId, socket, ipAddress, data) => {
+        console.log(`[AntiCheat] Banning player ${playerId} (IP: ${ipAddress}) - Score: ${data.score}`);
+        if (socket && socket.readyState === 1) {
+            socket.send(JSON.stringify(['ANTICHEAT_BAN', [{ 
+                message: 'You have been banned for cheating.',
+                reason: 'anticheat',
+                duration: '24 hours'
+            }]]));
+            setTimeout(() => {
+                try { socket.close(4011); } catch (e) {}
+            }, 100);
+        }
+    }
+});
 
 app.get("/", (req, res) => {
     res.sendFile(INDEX)
@@ -309,6 +350,11 @@ wss.on("connection", async (socket, req) => {
         return void socket.close(4003);
     }
 
+    if (antiCheat.isBanned(addr)) {
+        console.log(`[AntiCheat] Blocked banned IP: ${addr}`);
+        return void socket.close(4011);
+    }
+
     if (
         colimit.check(addr)
     ) {
@@ -334,6 +380,12 @@ wss.on("connection", async (socket, req) => {
     player.sessionToken = sessionToken;
     player.sessionUserId = sessionUserId;
     player.lastActivity = Date.now();
+    player.antiCheatData = {
+        lastInputTime: Date.now(),
+        lastAttackTime: 0,
+        positionHistory: [],
+        actionCooldowns: new Map()
+    };
 
     const emit = async (type, ...data) => {
 
@@ -488,6 +540,9 @@ wss.on("connection", async (socket, req) => {
 
                     if (!(data[0] === undefined || data[0] === null) && !UTILS.isNumber(data[0])) break;
 
+                    antiCheat.recordInput(player.id, Date.now());
+                    antiCheat.recordGameplayAction(player.id);
+
                     player.moveDir = data[0];
                     break;
 
@@ -502,6 +557,16 @@ wss.on("connection", async (socket, req) => {
                         player.mouseState = 0;
                         player.hits = 0;
                         break;
+                    }
+
+                    if (data[0]) {
+                        antiCheat.recordAttack(player.id, Date.now());
+                        antiCheat.recordGameplayAction(player.id);
+                        
+                        const attackValidation = antiCheat.validateAttackTiming(player, player.weaponIndex);
+                        if (!attackValidation.valid && attackValidation.suspicionScore > 30) {
+                            antiCheat.checkAndEnforce(player.id, socket, addr);
+                        }
                     }
 
                     player.mouseState = data[0];
@@ -1023,6 +1088,23 @@ wss.on("connection", async (socket, req) => {
 
                     break;
                 }
+                case "INPUT_HEARTBEAT": {
+                    if (!player.alive) break;
+
+                    const heartbeatData = {
+                        mouseMovements: data[0] || 0,
+                        keystrokes: data[1] || 0,
+                        clickPatterns: Array.isArray(data[2]) ? data[2] : []
+                    };
+
+                    const heartbeatResult = antiCheat.processHeartbeat(player.id, heartbeatData);
+                    
+                    if (heartbeatResult.suspicionScore > 20) {
+                        antiCheat.checkAndEnforce(player.id, socket, addr);
+                    }
+
+                    break;
+                }
                 case "CREATE_PARTY": {
                     const partyCode = generatePartyCode();
                     player.partyCode = partyCode;
@@ -1067,6 +1149,7 @@ wss.on("connection", async (socket, req) => {
         
         colimit.down(addr);
         rateLimiter.removePlayer(player.id);
+        antiCheat.removePlayer(player.id);
         
         if (player.sessionToken) {
             sessionStore.invalidateSession(player.sessionToken);
