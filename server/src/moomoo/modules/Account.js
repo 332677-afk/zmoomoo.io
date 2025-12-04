@@ -1,72 +1,45 @@
 import bcrypt from 'bcryptjs';
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { db } from '../../db.js';
+import { accounts, AdminLevel } from '../../../../shared/schema.js';
+import { eq, sql } from 'drizzle-orm';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+export { AdminLevel };
 
-export const AdminLevel = {
-    None: 0,
-    Helper: 1,
-    Moderator: 2,
-    Staff: 3,
-    Admin: 4,
-    Owner: 5
-};
+function generateAccountId() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let id = '';
+    for (let i = 0; i < 8; i++) {
+        id += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return id;
+}
 
 export class AccountManager {
     constructor() {
-        this.accounts = new Map();
         this.sessions = new Map();
-        this.accountsFilePath = path.resolve(__dirname, '../../../data/accounts.json');
-        this.loadAccounts();
+        console.log('[Account] Database-backed AccountManager initialized');
     }
 
-    loadAccounts() {
-        try {
-            if (fs.existsSync(this.accountsFilePath)) {
-                const data = fs.readFileSync(this.accountsFilePath, 'utf8');
-                const accountsObject = JSON.parse(data);
-                for (const [username, account] of Object.entries(accountsObject)) {
-                    this.accounts.set(username.toLowerCase(), account);
-                }
-                console.log(`[Account] Loaded ${this.accounts.size} accounts from disk`);
-            }
-        } catch (error) {
-            console.error('[Account] Error loading accounts:', error);
-        }
-    }
-
-    saveAccounts() {
-        try {
-            const accountsObject = {};
-            for (const [username, account] of this.accounts.entries()) {
-                accountsObject[username] = account;
-            }
-            
-            const dir = path.dirname(this.accountsFilePath);
-            if (!fs.existsSync(dir)) {
-                fs.mkdirSync(dir, { recursive: true });
-            }
-            
-            fs.writeFileSync(this.accountsFilePath, JSON.stringify(accountsObject, null, 2));
-            console.log(`[Account] Saved ${this.accounts.size} accounts to disk`);
-        } catch (error) {
-            console.error('[Account] Error saving accounts:', error);
-        }
-    }
-
-    getAccount(username) {
+    async getAccount(username) {
         if (!username || typeof username !== 'string') return null;
-        return this.accounts.get(username.toLowerCase()) || null;
+        try {
+            const [account] = await db.select().from(accounts).where(eq(accounts.username, username.toLowerCase()));
+            return account || null;
+        } catch (error) {
+            console.error('[Account] Error getting account:', error);
+            return null;
+        }
     }
 
-    setAccount(username, account) {
-        if (!username || typeof username !== 'string') return false;
-        this.accounts.set(username.toLowerCase(), account);
-        this.saveAccounts();
-        return true;
+    async getAccountById(accountId) {
+        if (!accountId) return null;
+        try {
+            const [account] = await db.select().from(accounts).where(eq(accounts.accountId, accountId));
+            return account || null;
+        } catch (error) {
+            console.error('[Account] Error getting account by ID:', error);
+            return null;
+        }
     }
 
     async createAccount(username, password, displayName = null) {
@@ -79,28 +52,37 @@ export class AccountManager {
         
         const usernameLower = username.toLowerCase();
         
-        if (this.accounts.has(usernameLower)) {
-            return { success: false, error: 'Username already exists' };
-        }
-
-        if (username.length < 4 || username.length > 16) {
-            return { success: false, error: 'Username must be 4-16 characters' };
-        }
-
-        if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-            return { success: false, error: 'Username can only contain letters, numbers, and underscores' };
-        }
-
-        if (password.length < 8 || password.length > 30) {
-            return { success: false, error: 'Password must be 8-30 characters' };
-        }
-
         try {
+            const existing = await this.getAccount(usernameLower);
+            if (existing) {
+                return { success: false, error: 'Username already exists' };
+            }
+
+            if (username.length < 4 || username.length > 16) {
+                return { success: false, error: 'Username must be 4-16 characters' };
+            }
+
+            if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+                return { success: false, error: 'Username can only contain letters, numbers, and underscores' };
+            }
+
+            if (password.length < 8 || password.length > 30) {
+                return { success: false, error: 'Password must be 8-30 characters' };
+            }
+
             const salt = await bcrypt.genSalt(10);
             const passwordHash = await bcrypt.hash(password, salt);
 
-            const account = {
-                username: username,
+            let accountId = generateAccountId();
+            let existingId = await this.getAccountById(accountId);
+            while (existingId) {
+                accountId = generateAccountId();
+                existingId = await this.getAccountById(accountId);
+            }
+
+            const [account] = await db.insert(accounts).values({
+                accountId: accountId,
+                username: usernameLower,
                 displayName: displayName || username,
                 passwordHash: passwordHash,
                 adminLevel: AdminLevel.None,
@@ -108,12 +90,9 @@ export class AccountManager {
                 kills: 0,
                 deaths: 0,
                 playTime: 0,
-                createdAt: Date.now()
-            };
+            }).returning();
 
-            this.accounts.set(usernameLower, account);
-            this.saveAccounts();
-
+            console.log(`[Account] Created account ${usernameLower} with ID ${accountId}`);
             return { success: true, account: this.sanitizeAccount(account) };
         } catch (error) {
             console.error('[Account] Error creating account:', error);
@@ -129,14 +108,18 @@ export class AccountManager {
             return { success: false, error: 'Password is required' };
         }
 
-        const account = this.getAccount(username);
-        if (!account) {
-            return { success: false, error: 'Account not found' };
-        }
-
         try {
+            const account = await this.getAccount(username);
+            if (!account) {
+                return { success: false, error: 'Account not found' };
+            }
+
             const isValid = await bcrypt.compare(password, account.passwordHash);
             if (isValid) {
+                await db.update(accounts)
+                    .set({ lastLogin: new Date() })
+                    .where(eq(accounts.username, username.toLowerCase()));
+                
                 return { success: true, account: this.sanitizeAccount(account) };
             } else {
                 return { success: false, error: 'Invalid password' };
@@ -148,6 +131,7 @@ export class AccountManager {
     }
 
     sanitizeAccount(account) {
+        if (!account) return null;
         const { passwordHash, ...sanitized } = account;
         return sanitized;
     }
@@ -181,37 +165,68 @@ export class AccountManager {
         return count < 2;
     }
 
-    updateAccountStats(username, stats) {
-        const account = this.getAccount(username);
-        if (!account) return false;
+    async updateAccountStats(username, stats) {
+        try {
+            const account = await this.getAccount(username);
+            if (!account) return false;
 
-        if (typeof stats.kills === 'number') {
-            account.kills += stats.kills;
-        }
-        if (typeof stats.deaths === 'number') {
-            account.deaths += stats.deaths;
-        }
-        if (typeof stats.playTime === 'number') {
-            account.playTime += stats.playTime;
-        }
-        if (typeof stats.balance === 'number') {
-            account.balance = stats.balance;
-        }
+            const updates = {};
+            if (typeof stats.kills === 'number') {
+                updates.kills = sql`${accounts.kills} + ${stats.kills}`;
+            }
+            if (typeof stats.deaths === 'number') {
+                updates.deaths = sql`${accounts.deaths} + ${stats.deaths}`;
+            }
+            if (typeof stats.playTime === 'number') {
+                updates.playTime = sql`${accounts.playTime} + ${stats.playTime}`;
+            }
+            if (typeof stats.balance === 'number') {
+                updates.balance = stats.balance;
+            }
 
-        this.setAccount(username, account);
-        return true;
-    }
-
-    setAdminLevel(username, level) {
-        const account = this.getAccount(username);
-        if (!account) return false;
-
-        if (typeof level !== 'number' || level < AdminLevel.None || level > AdminLevel.Owner) {
+            if (Object.keys(updates).length > 0) {
+                await db.update(accounts)
+                    .set(updates)
+                    .where(eq(accounts.username, username.toLowerCase()));
+            }
+            return true;
+        } catch (error) {
+            console.error('[Account] Error updating stats:', error);
             return false;
         }
+    }
 
-        account.adminLevel = level;
-        this.setAccount(username, account);
-        return true;
+    async setAdminLevel(username, level) {
+        try {
+            const account = await this.getAccount(username);
+            if (!account) return false;
+
+            if (typeof level !== 'number' || level < AdminLevel.None || level > AdminLevel.Zahre) {
+                return false;
+            }
+
+            await db.update(accounts)
+                .set({ adminLevel: level })
+                .where(eq(accounts.username, username.toLowerCase()));
+            
+            console.log(`[Account] Set admin level for ${username} to ${level}`);
+            return true;
+        } catch (error) {
+            console.error('[Account] Error setting admin level:', error);
+            return false;
+        }
+    }
+
+    getAdminLevelName(level) {
+        switch (level) {
+            case AdminLevel.None: return 'Player';
+            case AdminLevel.Helper: return 'Helper';
+            case AdminLevel.Moderator: return 'Moderator';
+            case AdminLevel.Staff: return 'Staff';
+            case AdminLevel.Admin: return 'Admin';
+            case AdminLevel.Owner: return 'Owner';
+            case AdminLevel.Zahre: return 'Zahre';
+            default: return 'Unknown';
+        }
     }
 }

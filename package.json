@@ -8,7 +8,8 @@
     "build": "npm run build --workspace client",
     "build:dev": "npm run build:dev --workspace client",
     "start": "npm run start --workspace server",
-    "dev": "npm run dev --workspace server"
+    "dev": "npm run dev --workspace server",
+    "db:push": "drizzle-kit push"
   },
   "workspaces": [
     "client",
@@ -18,7 +19,10 @@
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
-    "node-fetch": "^3.3.2"
+    "drizzle-kit": "^0.31.8",
+    "drizzle-orm": "^0.45.0",
+    "node-fetch": "^3.3.2",
+    "pg": "^8.16.3"
   },
   "devDependencies": {
     "puppeteer": "^24.29.1"

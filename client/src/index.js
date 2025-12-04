@@ -152,8 +152,158 @@ function connectSocket() {
         "KICKED": handleKicked,
         "BANNED": handleBanned,
         "TC": handleTeleportClick,
-        "MM": handleMobMode
+        "MM": handleMobMode,
+        "AUTH_RESULT": handleAuthResult,
+        "REGISTER_RESULT": handleRegisterResult
     });
+}
+
+var currentAccount = null;
+
+function handleAuthResult(data) {
+    if (data && data[0]) {
+        var result = data[0];
+        if (result.success) {
+            currentAccount = result.account;
+            saveVal("moo_account", JSON.stringify(currentAccount));
+            updateAccountUI();
+            hideAuthModal();
+            showNotification("Logged in as " + currentAccount.displayName);
+        } else {
+            showAuthError(result.error || "Login failed");
+        }
+    }
+}
+
+function handleRegisterResult(data) {
+    if (data && data[0]) {
+        var result = data[0];
+        if (result.success) {
+            currentAccount = result.account;
+            saveVal("moo_account", JSON.stringify(currentAccount));
+            updateAccountUI();
+            hideAuthModal();
+            showNotification("Account created! ID: " + currentAccount.accountId);
+        } else {
+            showAuthError(result.error || "Registration failed");
+        }
+    }
+}
+
+function updateAccountUI() {
+    var accountSection = document.getElementById("accountSection");
+    var loginButtons = document.getElementById("loginButtons");
+    var accountInfo = document.getElementById("accountInfo");
+    var accountIdDisplay = document.getElementById("accountIdDisplay");
+    var accountNameDisplay = document.getElementById("accountNameDisplay");
+    var accountRankDisplay = document.getElementById("accountRankDisplay");
+    
+    if (currentAccount) {
+        if (loginButtons) loginButtons.style.display = "none";
+        if (accountInfo) accountInfo.style.display = "block";
+        if (accountIdDisplay) accountIdDisplay.textContent = currentAccount.accountId;
+        if (accountNameDisplay) accountNameDisplay.textContent = currentAccount.displayName;
+        if (accountRankDisplay) {
+            var rankName = getAdminRankName(currentAccount.adminLevel);
+            accountRankDisplay.textContent = rankName;
+            accountRankDisplay.className = "accountRank rank-" + currentAccount.adminLevel;
+        }
+    } else {
+        if (loginButtons) loginButtons.style.display = "block";
+        if (accountInfo) accountInfo.style.display = "none";
+    }
+}
+
+function getAdminRankName(level) {
+    switch (level) {
+        case 0: return "Player";
+        case 1: return "Helper";
+        case 2: return "Moderator";
+        case 3: return "Staff";
+        case 4: return "Admin";
+        case 5: return "Owner";
+        case 6: return "Zahre";
+        default: return "Player";
+    }
+}
+
+function showAuthModal(isLogin) {
+    var modal = document.getElementById("authModal");
+    var modalTitle = document.getElementById("authModalTitle");
+    var authSubmitBtn = document.getElementById("authSubmitBtn");
+    var displayNameGroup = document.getElementById("displayNameGroup");
+    
+    if (modal) modal.style.display = "flex";
+    if (modalTitle) modalTitle.textContent = isLogin ? "Sign In" : "Create Account";
+    if (authSubmitBtn) authSubmitBtn.textContent = isLogin ? "Sign In" : "Create Account";
+    if (displayNameGroup) displayNameGroup.style.display = isLogin ? "none" : "block";
+    
+    window.authIsLogin = isLogin;
+}
+
+function hideAuthModal() {
+    var modal = document.getElementById("authModal");
+    if (modal) modal.style.display = "none";
+    var authError = document.getElementById("authError");
+    if (authError) authError.style.display = "none";
+    document.getElementById("authUsername").value = "";
+    document.getElementById("authPassword").value = "";
+    document.getElementById("authDisplayName").value = "";
+}
+
+function showAuthError(message) {
+    var authError = document.getElementById("authError");
+    if (authError) {
+        authError.textContent = message;
+        authError.style.display = "block";
+    }
+}
+
+function submitAuth() {
+    var username = document.getElementById("authUsername").value.trim();
+    var password = document.getElementById("authPassword").value;
+    var displayName = document.getElementById("authDisplayName").value.trim();
+    
+    if (!username || !password) {
+        showAuthError("Please fill in all required fields");
+        return;
+    }
+    
+    if (window.authIsLogin) {
+        io.send("AUTH", username, password);
+    } else {
+        io.send("REGISTER", username, password, displayName || username);
+    }
+}
+
+function logoutAccount() {
+    currentAccount = null;
+    saveVal("moo_account", "");
+    updateAccountUI();
+    showNotification("Logged out");
+}
+
+function showNotification(message) {
+    var notification = document.getElementById("notificationDisplay");
+    if (notification) {
+        notification.textContent = message;
+        notification.style.display = "block";
+        setTimeout(function() {
+            notification.style.display = "none";
+        }, 3000);
+    }
+}
+
+function loadSavedAccount() {
+    var savedAccount = getSavedVal("moo_account");
+    if (savedAccount) {
+        try {
+            currentAccount = JSON.parse(savedAccount);
+            updateAccountUI();
+        } catch (e) {
+            currentAccount = null;
+        }
+    }
 }
 
 function socketReady() {
@@ -3892,6 +4042,7 @@ function startGame() {
     nameInput.value = getSavedVal("moo_name") || "";
     prepareUI();
     initPerformanceDisplay();
+    loadSavedAccount();
 }
 
 prepareMenuBackground();
@@ -3912,6 +4063,10 @@ function switchServerMode(mode) {
 window.openLink = openLink;
 window.aJoinReq = aJoinReq;
 window.follmoo = follmoo;
+window.showAuthModal = showAuthModal;
+window.hideAuthModal = hideAuthModal;
+window.submitAuth = submitAuth;
+window.logoutAccount = logoutAccount;
 window.kickFromClan = kickFromClan;
 window.sendJoin = sendJoin;
 window.leaveAlliance = leaveAlliance;

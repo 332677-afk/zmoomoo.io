@@ -693,13 +693,8 @@ wss.on("connection", async (socket, req) => {
                     break;
                 }
                 case "AUTH": {
-                    const authData = data[0];
-                    if (!authData || typeof authData !== 'object') {
-                        emit("AUTH_RESULT", { success: false, error: 'Invalid auth data' });
-                        break;
-                    }
-
-                    const { username, password } = authData;
+                    const username = data[0];
+                    const password = data[1];
 
                     if (!username || typeof username !== 'string' || !password || typeof password !== 'string') {
                         emit("AUTH_RESULT", { success: false, error: 'Username and password required' });
@@ -742,6 +737,41 @@ wss.on("connection", async (socket, req) => {
                     } catch (error) {
                         console.error('[Account] Auth error:', error);
                         emit("AUTH_RESULT", { success: false, error: 'Authentication failed' });
+                    }
+
+                    break;
+                }
+                case "REGISTER": {
+                    const username = data[0];
+                    const password = data[1];
+                    const displayName = data[2];
+
+                    if (!username || typeof username !== 'string' || !password || typeof password !== 'string') {
+                        emit("REGISTER_RESULT", { success: false, error: 'Username and password required' });
+                        break;
+                    }
+
+                    try {
+                        const result = await accountManager.createAccount(username, password, displayName || username);
+
+                        if (result.success) {
+                            player.account = result.account;
+                            player.accountUsername = result.account.username;
+                            accountManager.addSession(username);
+
+                            emit("REGISTER_RESULT", { 
+                                success: true, 
+                                account: result.account,
+                                message: `Account created! ID: ${result.account.accountId}`
+                            });
+
+                            console.log(`[Account] Player ${player.sid} registered as ${result.account.username} (ID: ${result.account.accountId})`);
+                        } else {
+                            emit("REGISTER_RESULT", { success: false, error: result.error });
+                        }
+                    } catch (error) {
+                        console.error('[Account] Register error:', error);
+                        emit("REGISTER_RESULT", { success: false, error: 'Registration failed' });
                     }
 
                     break;

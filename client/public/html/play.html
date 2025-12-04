@@ -389,28 +389,47 @@
 
                 <!-- Right Column - Account -->
                 <div class="menuColumn rightColumn">
-                    <div class="menuCard"
+                    <div class="menuCard" id="accountSection"
                         style="padding: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
-                        <div class="accountIcon" style="margin-bottom: 6px;">
-                            <i class="material-icons" style="font-size: 95px; color: #7ee559;">account_circle</i>
-                        </div>
-                        <div class="menuHeader" style="text-align:center; margin-bottom: 6px; font-size: 22px;">Welcome
-                            to MooMoo.io</div>
-                        <div class="menuText"
-                            style="text-align:center; margin-bottom: 14px; font-size: 17px; line-height: 1.4;">Sign in
-                            to save your
-                            progress, track statistics, and unlock exclusive features.</div>
-                        <div class="buttonGroup" style="width: 100%; gap: 8px;">
-                            <div class="menuButton primaryButton" style="padding: 10px 16px; font-size: 16px;">
-                                <span>Sign In</span>
+                        
+                        <!-- Login Buttons (shown when logged out) -->
+                        <div id="loginButtons">
+                            <div class="accountIcon" style="margin-bottom: 6px;">
+                                <i class="material-icons" style="font-size: 95px; color: #7ee559;">account_circle</i>
                             </div>
-                            <div class="menuButton secondaryButton" style="padding: 10px 16px; font-size: 16px;">
-                                <span>Create Account</span>
+                            <div class="menuHeader" style="text-align:center; margin-bottom: 6px; font-size: 22px;">Welcome
+                                to MooMoo.io</div>
+                            <div class="menuText"
+                                style="text-align:center; margin-bottom: 14px; font-size: 17px; line-height: 1.4;">Sign in
+                                to save your
+                                progress, track statistics, and unlock exclusive features.</div>
+                            <div class="buttonGroup" style="width: 100%; gap: 8px;">
+                                <div class="menuButton primaryButton" onclick="showAuthModal(true)" style="padding: 10px 16px; font-size: 16px; cursor: pointer;">
+                                    <span>Sign In</span>
+                                </div>
+                                <div class="menuButton secondaryButton" onclick="showAuthModal(false)" style="padding: 10px 16px; font-size: 16px; cursor: pointer;">
+                                    <span>Create Account</span>
+                                </div>
+                            </div>
+                            <div class="infoBox" style="margin-top: 10px; padding: 10px;">
+                                <i class="material-icons" style="font-size: 16px;">info</i>
+                                <span style="font-size: 12px;">Guest mode: Play without an account</span>
                             </div>
                         </div>
-                        <div class="infoBox" style="margin-top: 10px; padding: 10px;">
-                            <i class="material-icons" style="font-size: 16px;">info</i>
-                            <span style="font-size: 12px;">Guest mode: Play without an account</span>
+                        
+                        <!-- Account Info (shown when logged in) -->
+                        <div id="accountInfo" style="display: none; text-align: center; width: 100%;">
+                            <div class="accountIcon" style="margin-bottom: 6px;">
+                                <i class="material-icons" style="font-size: 80px; color: #7ee559;">verified_user</i>
+                            </div>
+                            <div id="accountIdDisplay" style="font-size: 20px; font-weight: bold; color: #7ee559; margin-bottom: 4px; font-family: monospace;"></div>
+                            <div id="accountNameDisplay" style="font-size: 18px; color: #333; margin-bottom: 8px;"></div>
+                            <div id="accountRankDisplay" class="accountRank" style="font-size: 14px; padding: 4px 12px; border-radius: 12px; display: inline-block; margin-bottom: 12px;"></div>
+                            <div class="buttonGroup" style="width: 100%; gap: 8px; margin-top: 12px;">
+                                <div class="menuButton secondaryButton" onclick="logoutAccount()" style="padding: 8px 16px; font-size: 14px; cursor: pointer;">
+                                    <span>Logout</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -568,6 +587,45 @@
             <div id="allianceManager"></div>
         </div>
     </div><canvas id="gameCanvas"></canvas>
+    
+    <!-- Auth Modal -->
+    <div id="authModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center;">
+        <div style="background: #fff; border-radius: 12px; padding: 24px; width: 320px; max-width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h2 id="authModalTitle" style="margin: 0; color: #333; font-size: 20px;">Sign In</h2>
+                <span onclick="hideAuthModal()" style="cursor: pointer; font-size: 24px; color: #999;">&times;</span>
+            </div>
+            
+            <div id="authError" style="display: none; background: #ffe0e0; color: #c00; padding: 10px; border-radius: 6px; margin-bottom: 12px; font-size: 14px;"></div>
+            
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; margin-bottom: 4px; font-weight: 600; color: #555; font-size: 14px;">Username</label>
+                <input id="authUsername" type="text" placeholder="4-16 characters" maxlength="16" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px; box-sizing: border-box;">
+            </div>
+            
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; margin-bottom: 4px; font-weight: 600; color: #555; font-size: 14px;">Password</label>
+                <input id="authPassword" type="password" placeholder="8-30 characters" maxlength="30" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px; box-sizing: border-box;">
+            </div>
+            
+            <div id="displayNameGroup" style="margin-bottom: 16px; display: none;">
+                <label style="display: block; margin-bottom: 4px; font-weight: 600; color: #555; font-size: 14px;">Display Name (optional)</label>
+                <input id="authDisplayName" type="text" placeholder="How others see you" maxlength="30" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px; box-sizing: border-box;">
+            </div>
+            
+            <button id="authSubmitBtn" onclick="submitAuth()" style="width: 100%; padding: 12px; background: #7ee559; color: #fff; border: none; border-radius: 6px; font-size: 16px; font-weight: 600; cursor: pointer;">Sign In</button>
+        </div>
+    </div>
+    
+    <style>
+        .accountRank.rank-0 { background: #e0e0e0; color: #666; }
+        .accountRank.rank-1 { background: #90caf9; color: #1565c0; }
+        .accountRank.rank-2 { background: #a5d6a7; color: #2e7d32; }
+        .accountRank.rank-3 { background: #ce93d8; color: #7b1fa2; }
+        .accountRank.rank-4 { background: #ffcc80; color: #e65100; }
+        .accountRank.rank-5 { background: #ef9a9a; color: #c62828; }
+        .accountRank.rank-6 { background: linear-gradient(135deg, #ffd700, #ff6b6b, #4ecdc4, #a855f7); color: #fff; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+    </style>
 </body>
 
 </html>
