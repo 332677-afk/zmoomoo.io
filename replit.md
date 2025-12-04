@@ -161,6 +161,16 @@ console.log(MooMoo.myPlayer.x, MooMoo.myPlayer.y);
 ```
 
 ## Recent Changes (December 4, 2025)
+- **Comprehensive Account System Implementation**:
+  - Added detailed stats tracking: kills, deaths, score, highest score, playtime, tribes created, current tribe
+  - Auto-admin login: Users with admin rank automatically receive admin powers when logging in (no /login needed)
+  - Enhanced stats panel in UI showing all account details without exposing passwords
+  - Database schema updated with new fields (score, highestScore, tribesCreated, currentTribe, playTime as bigint)
+  - Session tracking for kills, deaths, and score - stats persist across reconnects
+  - Tribe creation and membership tracking integrated with accounts
+- **Admin Level Hierarchy**: None(0), Helper(1), Moderator(2), Staff(3), Admin(4), Owner(5), Zahre(6)
+- **Special Account Created**: Zahre account (ID: XUJP2NIB) with highest admin rank (level 6)
+  - Temporary password: ZahreAdmin2025 (please change this after first login)
 - Fixed packet identifier validation that was blocking AUTH/REGISTER packets
 - Increased max packet identifier length from 3 to 16 characters
 - Fixed cache invalidation bug in admin level changes
