@@ -1,5 +1,7 @@
 import 'dotenv/config';
 import e from "express";
+import helmet from "helmet";
+import cors from "cors";
 import path from "node:path";
 import fs from "node:fs";
 import { WebSocketServer } from "ws";
@@ -18,6 +20,44 @@ import { AccountManager, AdminLevel } from "./moomoo/modules/Account.js";
 import { fileURLToPath } from "node:url";
 
 const app = e();
+
+const allowedOrigin = process.env.REPLIT_DEPLOYMENT_URL || '*';
+
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com"],
+            imgSrc: ["'self'", "data:", "blob:"],
+            connectSrc: ["'self'", "wss:", "ws:"],
+            frameSrc: ["'none'"],
+            objectSrc: ["'none'"],
+            upgradeInsecureRequests: []
+        }
+    },
+    crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: { policy: "same-origin" },
+    crossOriginResourcePolicy: { policy: "same-origin" },
+    hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true
+    },
+    frameguard: { action: 'deny' },
+    noSniff: true,
+    xssFilter: true,
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
+}));
+
+app.use(cors({
+    origin: allowedOrigin === '*' ? true : allowedOrigin,
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+    maxAge: 86400
+}));
 
 const loginAttempts = new Map();
 const LOGIN_RATE_LIMIT = 5;
@@ -76,7 +116,8 @@ function generatePartyCode() {
     return code;
 }
 
-app.use(e.json());
+app.use(e.json({ limit: '10kb' }));
+app.use(e.urlencoded({ extended: true, limit: '10kb' }));
 
 app.use((req, res, next) => {
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
