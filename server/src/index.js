@@ -586,7 +586,12 @@ wss.on("connection", async (socket, req) => {
 
                     if (data[0].length < 1 || data[0].length > 7) break;
 
-                    const _created = game.clan_manager.create(data[0], player);
+                    const created = game.clan_manager.create(data[0], player);
+                    
+                    if (created && player.accountUsername) {
+                        accountManager.incrementTribesCreated(player.accountUsername);
+                        accountManager.updateCurrentTribe(player.accountUsername, data[0]);
+                    }
 
                     break;
                 }
@@ -599,6 +604,10 @@ wss.on("connection", async (socket, req) => {
                     if (player.clan_cooldown > 0) break;
 
                     player.clan_cooldown = 200;
+                    
+                    if (player.accountUsername) {
+                        accountManager.updateCurrentTribe(player.accountUsername, null);
+                    }
 
                     if (player.is_owner) {
                         game.clan_manager.remove(player.team);
@@ -797,6 +806,12 @@ wss.on("connection", async (socket, req) => {
         colimit.down(addr);
 
         if (player.accountUsername) {
+            accountManager.updateClientSessionStats(player.id, {
+                kills: player.kills || 0,
+                deaths: player.alive === false && player.health <= 0 ? 1 : 0,
+                score: player.points || 0
+            });
+            
             accountManager.removeSession(player.accountUsername);
             await accountManager.saveClientPlayTime(player.id);
         }
