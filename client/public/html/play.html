@@ -419,13 +419,62 @@
                         
                         <!-- Account Info (shown when logged in) -->
                         <div id="accountInfo" style="display: none; text-align: center; width: 100%;">
-                            <div class="accountIcon" style="margin-bottom: 6px;">
-                                <i class="material-icons" style="font-size: 80px; color: #7ee559;">verified_user</i>
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                <i class="material-icons" style="font-size: 50px; color: #7ee559;">verified_user</i>
+                                <div style="text-align: left; flex: 1;">
+                                    <div id="accountNameDisplay" style="font-size: 18px; font-weight: bold; color: #333;"></div>
+                                    <div id="accountUsernameDisplay" style="font-size: 12px; color: #888; font-family: monospace;"></div>
+                                    <div id="accountIdDisplay" style="font-size: 11px; color: #aaa; font-family: monospace;"></div>
+                                </div>
                             </div>
-                            <div id="accountIdDisplay" style="font-size: 20px; font-weight: bold; color: #7ee559; margin-bottom: 4px; font-family: monospace;"></div>
-                            <div id="accountNameDisplay" style="font-size: 18px; color: #333; margin-bottom: 8px;"></div>
-                            <div id="accountRankDisplay" class="accountRank" style="font-size: 14px; padding: 4px 12px; border-radius: 12px; display: inline-block; margin-bottom: 12px;"></div>
-                            <div class="buttonGroup" style="width: 100%; gap: 8px; margin-top: 12px;">
+                            <div id="accountRankDisplay" class="accountRank" style="font-size: 13px; padding: 4px 14px; border-radius: 12px; display: inline-block; margin-bottom: 10px;"></div>
+                            
+                            <div id="accountStatsPanel" style="background: #f8f8f8; border: 1px solid #e0e0e0; border-radius: 8px; padding: 10px; text-align: left; margin-bottom: 10px;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12px;">
+                                    <div style="display: flex; align-items: center; gap: 4px;">
+                                        <i class="material-icons" style="font-size: 16px; color: #e53935;">local_fire_department</i>
+                                        <span style="color: #666;">Kills:</span>
+                                        <span id="accountKills" style="font-weight: 600; color: #333;">0</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 4px;">
+                                        <i class="material-icons" style="font-size: 16px; color: #757575;">dangerous</i>
+                                        <span style="color: #666;">Deaths:</span>
+                                        <span id="accountDeaths" style="font-weight: 600; color: #333;">0</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 4px;">
+                                        <i class="material-icons" style="font-size: 16px; color: #ffc107;">emoji_events</i>
+                                        <span style="color: #666;">Score:</span>
+                                        <span id="accountScore" style="font-weight: 600; color: #333;">0</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 4px;">
+                                        <i class="material-icons" style="font-size: 16px; color: #ff9800;">star</i>
+                                        <span style="color: #666;">High:</span>
+                                        <span id="accountHighScore" style="font-weight: 600; color: #333;">0</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 4px;">
+                                        <i class="material-icons" style="font-size: 16px; color: #9c27b0;">groups</i>
+                                        <span style="color: #666;">Tribe:</span>
+                                        <span id="accountTribe" style="font-weight: 600; color: #333;">None</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 4px;">
+                                        <i class="material-icons" style="font-size: 16px; color: #673ab7;">add_circle</i>
+                                        <span style="color: #666;">Created:</span>
+                                        <span id="accountTribesCreated" style="font-weight: 600; color: #333;">0</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 4px;">
+                                        <i class="material-icons" style="font-size: 16px; color: #2196f3;">schedule</i>
+                                        <span style="color: #666;">Playtime:</span>
+                                        <span id="accountPlayTime" style="font-weight: 600; color: #333;">0s</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 4px;">
+                                        <i class="material-icons" style="font-size: 16px; color: #4caf50;">cake</i>
+                                        <span style="color: #666;">Joined:</span>
+                                        <span id="accountCreatedAt" style="font-weight: 600; color: #333;">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="buttonGroup" style="width: 100%; gap: 8px;">
                                 <div class="menuButton secondaryButton" onclick="logoutAccount()" style="padding: 8px 16px; font-size: 14px; cursor: pointer;">
                                     <span>Logout</span>
                                 </div>

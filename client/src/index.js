@@ -191,26 +191,71 @@ function handleRegisterResult(data) {
 }
 
 function updateAccountUI() {
-    var accountSection = document.getElementById("accountSection");
     var loginButtons = document.getElementById("loginButtons");
     var accountInfo = document.getElementById("accountInfo");
     var accountIdDisplay = document.getElementById("accountIdDisplay");
+    var accountUsernameDisplay = document.getElementById("accountUsernameDisplay");
     var accountNameDisplay = document.getElementById("accountNameDisplay");
     var accountRankDisplay = document.getElementById("accountRankDisplay");
+    var accountKills = document.getElementById("accountKills");
+    var accountDeaths = document.getElementById("accountDeaths");
+    var accountScore = document.getElementById("accountScore");
+    var accountHighScore = document.getElementById("accountHighScore");
+    var accountTribe = document.getElementById("accountTribe");
+    var accountTribesCreated = document.getElementById("accountTribesCreated");
+    var accountPlayTime = document.getElementById("accountPlayTime");
+    var accountCreatedAt = document.getElementById("accountCreatedAt");
     
     if (currentAccount) {
         if (loginButtons) loginButtons.style.display = "none";
         if (accountInfo) accountInfo.style.display = "block";
-        if (accountIdDisplay) accountIdDisplay.textContent = currentAccount.accountId;
+        if (accountIdDisplay) accountIdDisplay.textContent = "ID: " + currentAccount.accountId;
+        if (accountUsernameDisplay) accountUsernameDisplay.textContent = "@" + currentAccount.username;
         if (accountNameDisplay) accountNameDisplay.textContent = currentAccount.displayName;
         if (accountRankDisplay) {
-            var rankName = getAdminRankName(currentAccount.adminLevel);
+            var rankName = currentAccount.rankName || getAdminRankName(currentAccount.adminLevel);
             accountRankDisplay.textContent = rankName;
             accountRankDisplay.className = "accountRank rank-" + currentAccount.adminLevel;
         }
+        if (accountKills) accountKills.textContent = formatNumber(currentAccount.kills || 0);
+        if (accountDeaths) accountDeaths.textContent = formatNumber(currentAccount.deaths || 0);
+        if (accountScore) accountScore.textContent = formatNumber(currentAccount.score || 0);
+        if (accountHighScore) accountHighScore.textContent = formatNumber(currentAccount.highestScore || 0);
+        if (accountTribe) accountTribe.textContent = currentAccount.currentTribe || "None";
+        if (accountTribesCreated) accountTribesCreated.textContent = currentAccount.tribesCreated || 0;
+        if (accountPlayTime) accountPlayTime.textContent = currentAccount.formattedPlayTime || formatPlayTime(currentAccount.playTime || 0);
+        if (accountCreatedAt) accountCreatedAt.textContent = currentAccount.formattedCreatedAt || formatDate(currentAccount.createdAt);
     } else {
         if (loginButtons) loginButtons.style.display = "block";
         if (accountInfo) accountInfo.style.display = "none";
+    }
+}
+
+function formatNumber(num) {
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
+    if (num >= 1000) return (num / 1000).toFixed(1) + "K";
+    return num.toString();
+}
+
+function formatPlayTime(milliseconds) {
+    var seconds = Math.floor(milliseconds / 1000);
+    var minutes = Math.floor(seconds / 60);
+    var hours = Math.floor(minutes / 60);
+    var days = Math.floor(hours / 24);
+    
+    if (days > 0) return days + "d " + (hours % 24) + "h";
+    if (hours > 0) return hours + "h " + (minutes % 60) + "m";
+    if (minutes > 0) return minutes + "m " + (seconds % 60) + "s";
+    return seconds + "s";
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return "-";
+    try {
+        var date = new Date(dateStr);
+        return date.toLocaleDateString();
+    } catch (e) {
+        return "-";
     }
 }
 
