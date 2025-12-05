@@ -317,14 +317,11 @@ export class ObjectManager {
                             other.hideFromEnemy = false;
                         } else {
                             if (other.boostSpeed) {
-                                var boostForce = other.boostSpeed * 15 * (other.weightM || 1);
-                                var currentBoostX = boostForce * mathCOS(other.dir);
-                                var currentBoostY = boostForce * mathSIN(other.dir);
-                                var dotProduct = player.xVel * mathCOS(other.dir) + player.yVel * mathSIN(other.dir);
-                                if (dotProduct < boostForce) {
-                                    player.xVel = currentBoostX;
-                                    player.yVel = currentBoostY;
-                                }
+                                var boostForce = other.boostSpeed * 25 * (other.weightM || 1);
+                                var boostDirX = mathCOS(other.dir);
+                                var boostDirY = mathSIN(other.dir);
+                                player.xVel = boostForce * boostDirX;
+                                player.yVel = boostForce * boostDirY;
                             } else {
                                 if (other.healCol) {
                                     player.healCol = other.healCol;

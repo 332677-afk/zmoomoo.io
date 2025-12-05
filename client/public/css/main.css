@@ -1628,7 +1628,7 @@ span {
         padding: 10px;
         padding-top: 7px;
         padding-bottom: 5px;
-        width: 220px;
+        width: 280px;
         background-color: rgba(0, 0, 0, 0.25);
         -webkit-border-radius: 4px;
         -moz-border-radius: 4px;
@@ -1673,10 +1673,10 @@ span {
 .leaderboardItem {
         float: left;
         display: inline-block;
-        max-width: 150px;
+        max-width: 220px;
         white-space: nowrap;
         overflow: hidden;
-        text-overflow: ellipsis;
+        text-overflow: clip;
         font-size: 22px;
 }
 
