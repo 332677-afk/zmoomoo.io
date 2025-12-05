@@ -1,7 +1,19 @@
-# MooMoo.io Clone
+# ZMOOMOO.io
 
 ## Overview
-This project is a fully functional MooMoo.io private server implementation, designed for multiplayer gameplay with extensive admin capabilities. It includes a webpack-powered client for the frontend, an Express and WebSocket server for backend logic, and utilizes npm workspaces for monorepo management. The project aims to provide a robust, moddable, and secure game environment.
+This project is a fully functional ZMOOMOO.io private server implementation (based on MooMoo.io), designed for multiplayer gameplay with extensive admin capabilities. It includes a webpack-powered client for the frontend, an Express and WebSocket server for backend logic, and utilizes npm workspaces for monorepo management. The project aims to provide a robust, moddable, and secure game environment.
+
+## Database Setup (For New Deployments)
+When cloning this project to a new environment, you need to set up the PostgreSQL database:
+
+1. Set the `DATABASE_URL` environment variable with your PostgreSQL connection string
+2. Run the database setup script:
+   ```bash
+   npm run db:setup
+   ```
+   This creates the `accounts` table with all required columns for user registration.
+
+**Note:** The database itself is NOT stored in the Git repository. Only the schema definition (in `shared/schema.ts`) and setup script are included. Each deployment needs its own database.
 
 ## User Preferences
 - Game runs on port 5000 for Replit compatibility

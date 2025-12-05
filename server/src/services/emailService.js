@@ -44,10 +44,10 @@ export async function sendPasswordResetEmail(toEmail, resetCode, resetLink) {
   await client.emails.send({
     from: fromEmail,
     to: toEmail,
-    subject: 'MooMoo.io - Password Reset Request',
+    subject: 'ZMOOMOO.io - Password Reset Request',
     html: `
       <h2>Password Reset Request</h2>
-      <p>You requested to reset your password for your MooMoo.io account.</p>
+      <p>You requested to reset your password for your ZMOOMOO.io account.</p>
       <p>Your verification code is: <strong>${resetCode}</strong></p>
       <p>Or click this link to reset your password:</p>
       <a href="${resetLink}">Reset Password</a>
