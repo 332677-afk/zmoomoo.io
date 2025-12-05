@@ -315,32 +315,26 @@ export class ObjectManager {
                         if (other.trap && !player.noTrap && other.owner != player && !(other.owner && other.owner.team && other.owner.team == player.team)) {
                             player.lockMove = true;
                             other.hideFromEnemy = false;
-                        } else {
-                            if (other.boostSpeed) {
-                                if (!player.lastBoostTime || Date.now() - player.lastBoostTime > 200) {
-                                    player.lastBoostTime = Date.now();
-                                    var boostForce = other.boostSpeed * 40 * (other.weightM || 1);
-                                    var boostDir;
-                                    if (player.moveDir !== undefined) {
-                                        boostDir = player.moveDir;
-                                    } else if (mathABS(player.xVel) > 0.1 || mathABS(player.yVel) > 0.1) {
-                                        boostDir = Math.atan2(player.yVel, player.xVel);
-                                    } else {
-                                        boostDir = other.dir;
-                                    }
-                                    player.xVel = boostForce * mathCOS(boostDir);
-                                    player.yVel = boostForce * mathSIN(boostDir);
-                                }
-                            } else {
-                                if (other.healCol) {
-                                    player.healCol = other.healCol;
+                        } else if (other.boostSpeed > 0) {
+                            if (!player.lastBoostTime || Date.now() - player.lastBoostTime > 200) {
+                                player.lastBoostTime = Date.now();
+                                var boostForce = other.boostSpeed * 40 * (other.weightM || 1);
+                                var boostDir;
+                                if (player.moveDir !== undefined) {
+                                    boostDir = player.moveDir;
+                                } else if (mathABS(player.xVel) > 0.1 || mathABS(player.yVel) > 0.1) {
+                                    boostDir = Math.atan2(player.yVel, player.xVel);
                                 } else {
-                                    if (other.teleport) {
-                                        player.x = UTILS.randInt(0, config.mapScale);
-                                        player.y = UTILS.randInt(0, config.mapScale);
-                                    }
+                                    boostDir = other.dir;
                                 }
+                                player.xVel = boostForce * mathCOS(boostDir);
+                                player.yVel = boostForce * mathSIN(boostDir);
                             }
+                        } else if (other.healCol > 0) {
+                            player.healCol = other.healCol;
+                        } else if (other.teleport) {
+                            player.x = UTILS.randInt(0, config.mapScale);
+                            player.y = UTILS.randInt(0, config.mapScale);
                         }
                     }
                     if (other.zIndex > player.zIndex) {
