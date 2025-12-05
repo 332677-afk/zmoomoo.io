@@ -9,6 +9,7 @@ class SessionStore {
         this.idleTimeout = options.idleTimeout || DEFAULT_IDLE_TIMEOUT;
         this.absoluteTimeout = options.absoluteTimeout || DEFAULT_ABSOLUTE_TIMEOUT;
         this.userSessionMap = new Map();
+        this.userWebSocketMap = new Map();
         
         console.log(`[SessionStore] Initialized with idle timeout: ${this.idleTimeout / 1000}s, absolute timeout: ${this.absoluteTimeout / 1000}s`);
     }
@@ -255,6 +256,74 @@ class SessionStore {
             idleTimeoutMs: this.idleTimeout,
             absoluteTimeoutMs: this.absoluteTimeout
         };
+    }
+    
+    registerWebSocket(userId, socket, playerId = null) {
+        if (!userId || !socket) return;
+        
+        if (!this.userWebSocketMap.has(userId)) {
+            this.userWebSocketMap.set(userId, new Map());
+        }
+        
+        const socketId = playerId || `socket_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        this.userWebSocketMap.get(userId).set(socketId, socket);
+        
+        console.log(`[SessionStore] Registered WebSocket for user ${userId}, socket ID: ${socketId}`);
+        return socketId;
+    }
+    
+    unregisterWebSocket(userId, socketId) {
+        if (!userId || !socketId) return;
+        
+        const userSockets = this.userWebSocketMap.get(userId);
+        if (userSockets) {
+            userSockets.delete(socketId);
+            if (userSockets.size === 0) {
+                this.userWebSocketMap.delete(userId);
+            }
+        }
+    }
+    
+    getUserWebSockets(userId) {
+        if (!userId) return [];
+        
+        const userSockets = this.userWebSocketMap.get(userId);
+        if (!userSockets) return [];
+        
+        return Array.from(userSockets.entries()).map(([socketId, socket]) => ({
+            socketId,
+            socket,
+            isOpen: socket && socket.readyState === 1
+        }));
+    }
+    
+    closeAllUserWebSockets(userId, closeCode = 4011, encodedMessage = null) {
+        if (!userId) return { success: false, closedCount: 0 };
+        
+        const userSockets = this.userWebSocketMap.get(userId);
+        if (!userSockets) return { success: true, closedCount: 0 };
+        
+        let closedCount = 0;
+        for (const [socketId, socket] of userSockets.entries()) {
+            try {
+                if (socket && socket.readyState === 1) {
+                    if (encodedMessage) {
+                        socket.send(encodedMessage);
+                    }
+                    setTimeout(() => {
+                        try { socket.close(closeCode); } catch(e) {}
+                    }, 100);
+                    closedCount++;
+                }
+            } catch(e) {
+                console.error(`[SessionStore] Error closing socket ${socketId}:`, e);
+            }
+        }
+        
+        this.userWebSocketMap.delete(userId);
+        
+        console.log(`[SessionStore] Closed ${closedCount} WebSocket(s) for user ${userId}`);
+        return { success: true, closedCount };
     }
 }
 

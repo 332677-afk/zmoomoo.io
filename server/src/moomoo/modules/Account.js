@@ -28,7 +28,12 @@ function generateAccountId(username = null) {
 }
 
 function generateResetCode() {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    for (let i = 0; i < 8; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
 }
 
 function validateEmail(email) {
@@ -376,11 +381,36 @@ export class AccountManager {
             
             sessionStore.invalidateUserSessions(tokenValidation.accountId);
             
-            console.log(`[Account] Password reset for ${tokenValidation.username}`);
+            sessionStore.closeAllUserWebSockets(tokenValidation.accountId, 4012, null);
+            
+            console.log(`[Account] Password reset for ${tokenValidation.username}, all sessions invalidated`);
             return { success: true };
         } catch (error) {
             console.error('[Account] Error resetting password:', error);
             return { success: false, error: 'Failed to reset password' };
+        }
+    }
+    
+    async invalidateResetToken(email) {
+        if (!this.isDatabaseAvailable()) {
+            return { success: false, error: 'Database not connected' };
+        }
+        if (!email || typeof email !== 'string') {
+            return { success: false, error: 'Email is required' };
+        }
+        
+        const emailLower = email.toLowerCase();
+        
+        try {
+            await db.update(accounts)
+                .set({ resetToken: null, resetTokenExpiresAt: null })
+                .where(eq(accounts.email, emailLower));
+            
+            console.log(`[Account] Reset token invalidated for ${emailLower} due to failed attempts`);
+            return { success: true };
+        } catch (error) {
+            console.error('[Account] Error invalidating reset token:', error);
+            return { success: false, error: 'Failed to invalidate token' };
         }
     }
     

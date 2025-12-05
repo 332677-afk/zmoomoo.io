@@ -204,6 +204,33 @@ If no DATABASE_URL is set, the server runs in "guest-only mode":
 - No persistent stats or accounts
 
 ## Recent Changes (December 5, 2025)
+- **Email-Based Account System**:
+  - Email is now required during registration for account recovery
+  - Email validation and uniqueness enforcement
+  - Added "Forgot Password?" button near login for password reset
+  - Password reset flow with email verification code
+  - Uses Resend integration for sending emails
+
+- **Single Session Enforcement**:
+  - Only one active session allowed per account
+  - If a second login is detected, BOTH sessions are terminated with security message
+  - Prevents account sharing and improves security
+
+- **Enhanced Anti-Cheat System**:
+  - **Rapid Hat Switching Detection**: Flags players switching hats faster than 100ms (3+ times)
+  - **Auto-Heal Detection**: Tracks heal frequencies and flags bot-like precision healing
+  - **Tick Rate Analysis**: Detects abnormal game tick rates (speed hacks)
+  - **Input Pattern Analysis**: Identifies robotic input patterns (too consistent = bot)
+  - **Action Pattern Tracking**: Monitors action timing for suspicious behavior
+  - All violations feed into the suspicion scoring system for warnings, kicks, or bans
+
+- **Password Reset Flow**:
+  - Step 1: Enter email, receive 6-digit verification code
+  - Step 2: Enter verification code to confirm identity
+  - Step 3: Set new password
+  - 15-minute expiry on reset codes
+  - All user sessions invalidated after password reset
+
 - **Boost Pad Fix**: Changed from gradual velocity addition to impulse-based boost system
   - Now sets velocity directly (15x boost magnitude) when stepping on pad
   - Prevents velocity dampening from negating boost effect

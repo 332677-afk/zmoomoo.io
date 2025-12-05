@@ -371,69 +371,153 @@ app.post("/api/account/validate-session", async (req, res) => {
     }
 });
 
-const passwordResetAttempts = new Map();
-const PASSWORD_RESET_RATE_LIMIT = 3;
-const PASSWORD_RESET_RATE_WINDOW = 300000;
+const forgotPasswordAttempts = new Map();
+const verifyCodeAttempts = new Map();
+const resetPasswordAttempts = new Map();
+const resetCodeFailedAttempts = new Map();
 
-function checkPasswordResetRateLimit(ip) {
+const FORGOT_PASSWORD_RATE_LIMIT = 3;
+const FORGOT_PASSWORD_RATE_WINDOW = 15 * 60 * 1000;
+const VERIFY_CODE_RATE_LIMIT = 5;
+const VERIFY_CODE_RATE_WINDOW = 15 * 60 * 1000;
+const RESET_PASSWORD_RATE_LIMIT = 3;
+const RESET_PASSWORD_RATE_WINDOW = 15 * 60 * 1000;
+const MAX_FAILED_CODE_ATTEMPTS = 5;
+const CODE_LOCKOUT_DURATION = 30 * 60 * 1000;
+
+function checkForgotPasswordRateLimit(ip, email) {
     const now = Date.now();
-    const attempts = passwordResetAttempts.get(ip) || { count: 0, firstAttempt: now };
+    const key = `${ip}:${email}`;
+    const attempts = forgotPasswordAttempts.get(key) || { count: 0, firstAttempt: now };
     
-    if (now - attempts.firstAttempt > PASSWORD_RESET_RATE_WINDOW) {
+    if (now - attempts.firstAttempt > FORGOT_PASSWORD_RATE_WINDOW) {
         attempts.count = 1;
         attempts.firstAttempt = now;
     } else {
         attempts.count++;
     }
     
-    passwordResetAttempts.set(ip, attempts);
-    return attempts.count <= PASSWORD_RESET_RATE_LIMIT;
+    forgotPasswordAttempts.set(key, attempts);
+    return attempts.count <= FORGOT_PASSWORD_RATE_LIMIT;
+}
+
+function checkVerifyCodeRateLimit(email) {
+    const now = Date.now();
+    const attempts = verifyCodeAttempts.get(email) || { count: 0, firstAttempt: now };
+    
+    if (now - attempts.firstAttempt > VERIFY_CODE_RATE_WINDOW) {
+        attempts.count = 1;
+        attempts.firstAttempt = now;
+    } else {
+        attempts.count++;
+    }
+    
+    verifyCodeAttempts.set(email, attempts);
+    return attempts.count <= VERIFY_CODE_RATE_LIMIT;
+}
+
+function checkResetPasswordRateLimit(token) {
+    const now = Date.now();
+    const tokenKey = token.substring(0, 16);
+    const attempts = resetPasswordAttempts.get(tokenKey) || { count: 0, firstAttempt: now };
+    
+    if (now - attempts.firstAttempt > RESET_PASSWORD_RATE_WINDOW) {
+        attempts.count = 1;
+        attempts.firstAttempt = now;
+    } else {
+        attempts.count++;
+    }
+    
+    resetPasswordAttempts.set(tokenKey, attempts);
+    return attempts.count <= RESET_PASSWORD_RATE_LIMIT;
+}
+
+function recordFailedCodeAttempt(email) {
+    const now = Date.now();
+    const attempts = resetCodeFailedAttempts.get(email) || { count: 0, firstAttempt: now, lockedUntil: null };
+    
+    if (attempts.lockedUntil && now < attempts.lockedUntil) {
+        return { locked: true, remainingTime: attempts.lockedUntil - now };
+    }
+    
+    if (now - attempts.firstAttempt > CODE_LOCKOUT_DURATION) {
+        attempts.count = 1;
+        attempts.firstAttempt = now;
+        attempts.lockedUntil = null;
+    } else {
+        attempts.count++;
+    }
+    
+    if (attempts.count >= MAX_FAILED_CODE_ATTEMPTS) {
+        attempts.lockedUntil = now + CODE_LOCKOUT_DURATION;
+        resetCodeFailedAttempts.set(email, attempts);
+        return { locked: true, shouldInvalidateCode: true, remainingTime: CODE_LOCKOUT_DURATION };
+    }
+    
+    resetCodeFailedAttempts.set(email, attempts);
+    return { locked: false, attemptsRemaining: MAX_FAILED_CODE_ATTEMPTS - attempts.count };
+}
+
+function isCodeLocked(email) {
+    const now = Date.now();
+    const attempts = resetCodeFailedAttempts.get(email);
+    if (!attempts) return false;
+    if (attempts.lockedUntil && now < attempts.lockedUntil) {
+        return true;
+    }
+    return false;
+}
+
+function clearCodeAttempts(email) {
+    resetCodeFailedAttempts.delete(email);
 }
 
 app.post("/api/account/forgot-password", async (req, res) => {
     try {
         const ip = req.headers["x-forwarded-for"]?.split(",")[0] ?? req.socket.remoteAddress;
-        
-        if (!checkPasswordResetRateLimit(ip)) {
-            return res.status(429).json({ success: false, error: 'Too many requests. Please try again later.' });
-        }
-        
         const { email } = req.body;
         
         if (!email || typeof email !== 'string') {
-            return res.status(400).json({ success: false, error: 'Email is required' });
+            return res.json({ 
+                success: true, 
+                message: 'If an account with that email exists, a reset code has been sent.' 
+            });
         }
         
         const emailLower = email.toLowerCase().trim();
         
+        if (!checkForgotPasswordRateLimit(ip, emailLower)) {
+            return res.status(429).json({ 
+                success: false, 
+                error: 'Too many requests. Please try again in 15 minutes.' 
+            });
+        }
+        
         const result = await accountManager.generateResetToken(emailLower);
         
-        if (!result.success) {
-            return res.status(400).json({ success: false, error: result.error });
+        if (result.success) {
+            try {
+                const baseUrl = process.env.REPLIT_DEV_DOMAIN 
+                    ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
+                    : process.env.REPLIT_DEPLOYMENT_URL || 'http://localhost:5000';
+                const resetLink = `${baseUrl}/reset-password?token=${result.resetToken}`;
+                
+                await sendPasswordResetEmail(emailLower, result.resetCode, resetLink);
+            } catch (emailError) {
+                console.error('[API] Failed to send reset email:', emailError);
+            }
         }
         
-        try {
-            const baseUrl = process.env.REPLIT_DEV_DOMAIN 
-                ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
-                : process.env.REPLIT_DEPLOYMENT_URL || 'http://localhost:5000';
-            const resetLink = `${baseUrl}/reset-password?token=${result.resetToken}`;
-            
-            await sendPasswordResetEmail(emailLower, result.resetCode, resetLink);
-            
-            res.json({ 
-                success: true, 
-                message: 'If an account exists with that email, a reset code has been sent.' 
-            });
-        } catch (emailError) {
-            console.error('[API] Failed to send reset email:', emailError);
-            res.json({ 
-                success: true, 
-                message: 'If an account exists with that email, a reset code has been sent.' 
-            });
-        }
+        res.json({ 
+            success: true, 
+            message: 'If an account with that email exists, a reset code has been sent.' 
+        });
     } catch (error) {
         console.error('[API] Forgot password error:', error);
-        res.status(500).json({ success: false, error: 'Internal server error' });
+        res.json({ 
+            success: true, 
+            message: 'If an account with that email exists, a reset code has been sent.' 
+        });
     }
 });
 
@@ -442,20 +526,42 @@ app.post("/api/account/verify-reset-code", async (req, res) => {
         const { email, code } = req.body;
         
         if (!email || !code) {
-            return res.status(400).json({ success: false, error: 'Email and code are required' });
+            return res.status(400).json({ success: false, error: 'Invalid or expired code' });
         }
         
         const emailLower = email.toLowerCase().trim();
+        
+        if (isCodeLocked(emailLower)) {
+            return res.status(429).json({ 
+                success: false, 
+                error: 'Too many failed attempts. Please try again in 30 minutes.' 
+            });
+        }
+        
+        if (!checkVerifyCodeRateLimit(emailLower)) {
+            return res.status(429).json({ 
+                success: false, 
+                error: 'Too many requests. Please try again in 15 minutes.' 
+            });
+        }
+        
         const result = await accountManager.verifyResetCode(emailLower, code);
         
         if (result.valid) {
+            clearCodeAttempts(emailLower);
             res.json({ success: true, resetToken: result.resetToken });
         } else {
-            res.status(400).json({ success: false, error: result.error });
+            const lockResult = recordFailedCodeAttempt(emailLower);
+            
+            if (lockResult.shouldInvalidateCode) {
+                await accountManager.invalidateResetToken(emailLower);
+            }
+            
+            res.status(400).json({ success: false, error: 'Invalid or expired code' });
         }
     } catch (error) {
         console.error('[API] Verify reset code error:', error);
-        res.status(500).json({ success: false, error: 'Internal server error' });
+        res.status(400).json({ success: false, error: 'Invalid or expired code' });
     }
 });
 
@@ -464,7 +570,14 @@ app.post("/api/account/reset-password", async (req, res) => {
         const { token, newPassword } = req.body;
         
         if (!token) {
-            return res.status(400).json({ success: false, error: 'Reset token is required' });
+            return res.status(400).json({ success: false, error: 'Invalid or expired token' });
+        }
+        
+        if (!checkResetPasswordRateLimit(token)) {
+            return res.status(429).json({ 
+                success: false, 
+                error: 'Too many requests. Please try again in 15 minutes.' 
+            });
         }
         
         if (!newPassword || typeof newPassword !== 'string') {
@@ -480,11 +593,11 @@ app.post("/api/account/reset-password", async (req, res) => {
         if (result.success) {
             res.json({ success: true, message: 'Password has been reset successfully.' });
         } else {
-            res.status(400).json({ success: false, error: result.error });
+            res.status(400).json({ success: false, error: 'Invalid or expired token' });
         }
     } catch (error) {
         console.error('[API] Reset password error:', error);
-        res.status(500).json({ success: false, error: 'Internal server error' });
+        res.status(400).json({ success: false, error: 'Invalid or expired token' });
     }
 });
 
@@ -1213,6 +1326,8 @@ wss.on("connection", async (socket, req) => {
 
                             accountManager.addSession(username);
                             accountManager.trackClientSession(player.id, result.account.username, player.joinedAt);
+                            
+                            sessionStore.registerWebSocket(result.account.accountId, socket, player.id);
 
                             emit("AUTH_RESULT", { 
                                 success: true, 
@@ -1349,6 +1464,10 @@ wss.on("connection", async (socket, req) => {
         if (player.sessionToken) {
             sessionStore.invalidateSession(player.sessionToken);
         }
+        
+        if (player.accountId) {
+            sessionStore.unregisterWebSocket(player.accountId, player.id);
+        }
 
         if (player.accountUsername) {
             accountManager.updateClientSessionStats(player.id, {
@@ -1383,6 +1502,45 @@ setInterval(() => {
         console.log(`[SessionStore] Cleanup: removed ${result.cleanedCount} expired sessions, ${result.remainingSessions} remaining`);
     }
 }, SESSION_CLEANUP_INTERVAL);
+
+setInterval(() => {
+    const now = Date.now();
+    let cleaned = 0;
+    
+    for (const [key, data] of forgotPasswordAttempts.entries()) {
+        if (now - data.firstAttempt > FORGOT_PASSWORD_RATE_WINDOW * 2) {
+            forgotPasswordAttempts.delete(key);
+            cleaned++;
+        }
+    }
+    
+    for (const [key, data] of verifyCodeAttempts.entries()) {
+        if (now - data.firstAttempt > VERIFY_CODE_RATE_WINDOW * 2) {
+            verifyCodeAttempts.delete(key);
+            cleaned++;
+        }
+    }
+    
+    for (const [key, data] of resetPasswordAttempts.entries()) {
+        if (now - data.firstAttempt > RESET_PASSWORD_RATE_WINDOW * 2) {
+            resetPasswordAttempts.delete(key);
+            cleaned++;
+        }
+    }
+    
+    for (const [key, data] of resetCodeFailedAttempts.entries()) {
+        const expiredLockout = data.lockedUntil && now > data.lockedUntil + CODE_LOCKOUT_DURATION;
+        const expiredAttempts = now - data.firstAttempt > CODE_LOCKOUT_DURATION * 2;
+        if (expiredLockout || expiredAttempts) {
+            resetCodeFailedAttempts.delete(key);
+            cleaned++;
+        }
+    }
+    
+    if (cleaned > 0) {
+        console.log(`[RateLimit] Cleaned up ${cleaned} expired password reset rate limit entries`);
+    }
+}, 10 * 60 * 1000);
 
 server.listen(PORT, HOST, (error) => {
 
