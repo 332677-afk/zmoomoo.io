@@ -315,20 +315,20 @@ export class ObjectManager {
                         if (other.trap && !player.noTrap && other.owner != player && !(other.owner && other.owner.team && other.owner.team == player.team)) {
                             player.lockMove = true;
                             other.hideFromEnemy = false;
-                        } else {
-                            if (other.boostSpeed) {
+                        } else if (other.boostSpeed) {
+                            if (!player.boostPadsThisFrame) {
+                                player.boostPadsThisFrame = new Set();
+                            }
+                            if (!player.boostPadsThisFrame.has(other.sid)) {
+                                player.boostPadsThisFrame.add(other.sid);
                                 player.xVel += delta * other.boostSpeed * (other.weightM || 1) * mathCOS(other.dir);
                                 player.yVel += delta * other.boostSpeed * (other.weightM || 1) * mathSIN(other.dir);
-                            } else {
-                                if (other.healCol) {
-                                    player.healCol = other.healCol;
-                                } else {
-                                    if (other.teleport) {
-                                        player.x = UTILS.randInt(0, config.mapScale);
-                                        player.y = UTILS.randInt(0, config.mapScale);
-                                    }
-                                }
                             }
+                        } else if (other.healCol) {
+                            player.healCol = other.healCol;
+                        } else if (other.teleport) {
+                            player.x = UTILS.randInt(0, config.mapScale);
+                            player.y = UTILS.randInt(0, config.mapScale);
                         }
                     }
                     if (other.zIndex > player.zIndex) {

@@ -1492,24 +1492,81 @@ export class AdminCommands {
         return { success: true, message: 'Message broadcasted' };
     }
 
-    handlePromote(params, player) {
-        if (params.length < 1) {
-            return { success: false, message: 'Usage: /promote [player ID]' };
+    async handlePromote(params, player) {
+        if (params.length < 2) {
+            return { success: false, message: 'Usage: /promote [account ID] [level 0-6]' };
         }
         
-        const targets = this.getTargetPlayer(params[0]);
-        
-        if (targets.length === 0) {
-            return { success: false, message: 'Player not found' };
+        if (!this.accountManager) {
+            return { success: false, message: 'Account system not available' };
         }
         
-        targets.forEach(target => {
-            target.isAdmin = true;
-            target.adminLevel = 'full';
-            target.send('6', -1, 'You have been promoted to admin');
-        });
+        const callerLevel = player.account?.adminLevel ?? 0;
+        if (callerLevel < AdminLevel.Admin) {
+            return { success: false, message: 'You need Admin level (4) or higher to use this command' };
+        }
         
-        return { success: true, message: `Promoted ${targets.length} player(s) to admin` };
+        const targetAccountId = params[0];
+        const newLevel = parseInt(params[1]);
+        
+        if (!Number.isFinite(newLevel) || newLevel < AdminLevel.None || newLevel > AdminLevel.Zahre) {
+            const levelNames = Object.entries(ADMIN_LEVEL_NAMES)
+                .map(([level, name]) => `${level}=${name}`)
+                .join(', ');
+            return { success: false, message: `Invalid level. Valid levels: ${levelNames}` };
+        }
+        
+        if (newLevel >= callerLevel) {
+            return { success: false, message: `You can only promote to levels lower than your own (${callerLevel} - ${ADMIN_LEVEL_NAMES[callerLevel]})` };
+        }
+        
+        const targetAccount = await this.accountManager.getAccountById(targetAccountId);
+        if (!targetAccount) {
+            return { success: false, message: `Account with ID "${targetAccountId}" not found` };
+        }
+        
+        if (targetAccount.adminLevel >= callerLevel) {
+            return { success: false, message: `Cannot modify rank of this account (their level ${targetAccount.adminLevel} >= your level ${callerLevel})` };
+        }
+        
+        const oldLevel = targetAccount.adminLevel;
+        const success = await this.accountManager.setAdminLevel(targetAccount.username, newLevel);
+        
+        if (!success) {
+            return { success: false, message: 'Failed to update account rank in database' };
+        }
+        
+        const oldRankName = ADMIN_LEVEL_NAMES[oldLevel] || 'Unknown';
+        const newRankName = ADMIN_LEVEL_NAMES[newLevel] || 'Unknown';
+        const callerName = player.account?.displayName || player.name || 'Unknown';
+        
+        console.log(`[Admin] ${callerName} promoted ${targetAccount.username} (ID: ${targetAccountId}): ${oldLevel} (${oldRankName}) -> ${newLevel} (${newRankName})`);
+        
+        const targetPlayer = this.game.players.find(p => 
+            p.account && p.account.accountId === targetAccountId
+        );
+        
+        if (targetPlayer) {
+            targetPlayer.account.adminLevel = newLevel;
+            
+            if (newLevel >= AdminLevel.Admin) {
+                targetPlayer.isAdmin = true;
+                targetPlayer.adminLevel = 'full';
+            } else if (newLevel >= AdminLevel.Helper) {
+                targetPlayer.isAdmin = true;
+                targetPlayer.adminLevel = 'limited';
+            } else {
+                targetPlayer.isAdmin = false;
+                targetPlayer.adminLevel = null;
+            }
+            
+            targetPlayer.send('6', -1, `Your rank has been changed to ${newRankName} (level ${newLevel}) by ${callerName}`);
+        }
+        
+        return { 
+            success: true, 
+            message: `Promoted ${targetAccount.displayName} from ${oldRankName} (${oldLevel}) to ${newRankName} (${newLevel})` 
+        };
     }
 
     async handleSetRank(params, player) {

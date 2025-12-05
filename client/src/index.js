@@ -398,6 +398,24 @@ function updateAccountUI() {
     var accountPlayTime = document.getElementById("accountPlayTime");
     var accountCreatedAt = document.getElementById("accountCreatedAt");
     
+    var existingBanNotice = document.getElementById("banNoticeContainer");
+    if (existingBanNotice) existingBanNotice.remove();
+    
+    var banData = getSavedVal("moo_banned");
+    if (banData) {
+        try {
+            var banInfo = JSON.parse(banData);
+            var remaining = Math.ceil((banInfo.endTime - Date.now()) / 1000);
+            if (remaining > 0) {
+                showBanNoticeOnMenu(banInfo.message, remaining);
+            } else {
+                deleteVal("moo_banned");
+            }
+        } catch (e) {
+            deleteVal("moo_banned");
+        }
+    }
+    
     if (currentAccount) {
         if (loginButtons) loginButtons.style.display = "none";
         if (accountInfo) accountInfo.style.display = "block";
@@ -420,6 +438,73 @@ function updateAccountUI() {
         if (accountInfo) accountInfo.style.display = "none";
     }
     initGuestMode();
+}
+
+function showBanNoticeOnMenu(message, secondsRemaining) {
+    var accountCard = document.querySelector('.rightColumn .menuCard');
+    if (!accountCard) return;
+    
+    var existingNotice = document.getElementById("banNoticeContainer");
+    if (existingNotice) existingNotice.remove();
+    
+    var banNotice = document.createElement('div');
+    banNotice.id = 'banNoticeContainer';
+    banNotice.style.cssText = 'background:#ff2222;color:white;padding:15px;border-radius:8px;margin-bottom:15px;text-align:center;';
+    
+    var banTitle = document.createElement('div');
+    banTitle.style.cssText = 'font-size:18px;font-weight:bold;margin-bottom:8px;';
+    banTitle.textContent = 'This account is banned';
+    banNotice.appendChild(banTitle);
+    
+    var banReason = document.createElement('div');
+    banReason.style.cssText = 'font-size:14px;margin-bottom:10px;opacity:0.9;';
+    banReason.textContent = message;
+    banNotice.appendChild(banReason);
+    
+    var banTimer = document.createElement('div');
+    banTimer.id = 'menuBanTimer';
+    banTimer.style.cssText = 'font-size:16px;font-weight:bold;';
+    banTimer.textContent = formatBanTime(secondsRemaining);
+    banNotice.appendChild(banTimer);
+    
+    accountCard.insertBefore(banNotice, accountCard.firstChild);
+    
+    var banInterval = setInterval(function() {
+        var banData = getSavedVal("moo_banned");
+        if (!banData) {
+            clearInterval(banInterval);
+            var notice = document.getElementById("banNoticeContainer");
+            if (notice) notice.remove();
+            return;
+        }
+        try {
+            var banInfo = JSON.parse(banData);
+            var remaining = Math.ceil((banInfo.endTime - Date.now()) / 1000);
+            var timerEl = document.getElementById('menuBanTimer');
+            if (remaining > 0 && timerEl) {
+                timerEl.textContent = formatBanTime(remaining);
+            } else {
+                clearInterval(banInterval);
+                deleteVal("moo_banned");
+                var notice = document.getElementById("banNoticeContainer");
+                if (notice) notice.remove();
+            }
+        } catch (e) {
+            clearInterval(banInterval);
+        }
+    }, 1000);
+}
+
+function formatBanTime(seconds) {
+    if (seconds <= 0) return 'Expired';
+    var days = Math.floor(seconds / 86400);
+    var hours = Math.floor((seconds % 86400) / 3600);
+    var mins = Math.floor((seconds % 3600) / 60);
+    var secs = seconds % 60;
+    if (days > 0) return 'Unban in: ' + days + 'd ' + hours + 'h ' + mins + 'm';
+    if (hours > 0) return 'Unban in: ' + hours + 'h ' + mins + 'm ' + secs + 's';
+    if (mins > 0) return 'Unban in: ' + mins + 'm ' + secs + 's';
+    return 'Unban in: ' + secs + 's';
 }
 
 function formatNumber(num) {
@@ -2721,7 +2806,12 @@ function handleSuperHammer(sid) {
 
 function handleKicked(message) {
     try {
-        kickedMessage = message || "You have been kicked by an admin";
+        kickedMessage = message || "You have been kicked";
+        
+        saveVal("moo_kicked", JSON.stringify({
+            message: kickedMessage,
+            timestamp: Date.now()
+        }));
         
         var kickOverlay = document.createElement('div');
         kickOverlay.id = 'kickOverlay';
@@ -2729,19 +2819,28 @@ function handleKicked(message) {
         
         var kickText = document.createElement('div');
         kickText.style.cssText = 'color:#ff4444;font-size:48px;font-family:"Hammersmith One",sans-serif;text-align:center;margin-bottom:20px;';
-        kickText.textContent = kickedMessage;
+        kickText.textContent = 'YOU HAVE BEEN KICKED';
         kickOverlay.appendChild(kickText);
         
-        var subText = document.createElement('div');
-        subText.style.cssText = 'color:#ffffff;font-size:24px;font-family:"Hammersmith One",sans-serif;';
-        subText.textContent = 'Disconnecting...';
-        kickOverlay.appendChild(subText);
+        var reasonText = document.createElement('div');
+        reasonText.style.cssText = 'color:#ffffff;font-size:28px;font-family:"Hammersmith One",sans-serif;text-align:center;margin-bottom:30px;';
+        reasonText.textContent = kickedMessage;
+        kickOverlay.appendChild(reasonText);
+        
+        var reloadButton = document.createElement('div');
+        reloadButton.style.cssText = 'background:#4CAF50;color:white;padding:15px 40px;border-radius:8px;font-size:20px;font-family:"Hammersmith One",sans-serif;cursor:pointer;margin-top:20px;';
+        reloadButton.textContent = 'Reload';
+        reloadButton.onclick = function() {
+            deleteVal("moo_kicked");
+            window.location.reload();
+        };
+        kickOverlay.appendChild(reloadButton);
         
         document.body.appendChild(kickOverlay);
         
         setTimeout(function() {
-            disconnect("Kicked by admin");
-        }, 3000);
+            disconnect("Kicked");
+        }, 500);
     } catch (e) {
         console.error("Error in handleKicked:", e);
     }
@@ -2751,6 +2850,12 @@ function handleBanned(seconds, message) {
     try {
         bannedEndTime = Date.now() + (seconds * 1000);
         bannedCountdown = seconds;
+        
+        saveVal("moo_banned", JSON.stringify({
+            message: message || 'Banned by admin',
+            endTime: bannedEndTime,
+            timestamp: Date.now()
+        }));
         
         var banOverlay = document.createElement('div');
         banOverlay.id = 'banOverlay';
@@ -2777,6 +2882,14 @@ function handleBanned(seconds, message) {
         countdownLabel.textContent = 'seconds until disconnect';
         banOverlay.appendChild(countdownLabel);
         
+        var reloadButton = document.createElement('div');
+        reloadButton.style.cssText = 'background:#4CAF50;color:white;padding:15px 40px;border-radius:8px;font-size:20px;font-family:"Hammersmith One",sans-serif;cursor:pointer;margin-top:30px;';
+        reloadButton.textContent = 'Reload';
+        reloadButton.onclick = function() {
+            window.location.reload();
+        };
+        banOverlay.appendChild(reloadButton);
+        
         document.body.appendChild(banOverlay);
         
         var banInterval = setInterval(function() {
@@ -2787,6 +2900,7 @@ function handleBanned(seconds, message) {
             }
             if (remaining <= 0) {
                 clearInterval(banInterval);
+                deleteVal("moo_banned");
                 disconnect("Banned");
             }
         }, 100);

@@ -437,6 +437,7 @@ export class Player {
             this.zIndex = 0;
             this.lockMove = false;
             this.healCol = 0;
+            this.boostPadsThisFrame = null;
 
             (() => {
 
