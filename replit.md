@@ -44,6 +44,10 @@ Key architectural decisions include:
 - **Promote Command**: `/promote [account_id] [level]` with permission hierarchy (Admin→0-3, Owner→0-4, Zahre→0-5).
 
 ## Recent Changes
+- Fixed Ping/CPS display: ping removed from player nameplates, now only shows in performance panel; CPS shows next to players
+- Fixed boost pad collision: changed per-frame tracking to proper Set initialization, removed delta multiplication for consistent boost velocity
+- Enhanced H key quick-equip: now re-selects current build item if holding one, else selects first build item; keybind remappable in settings
+- Enhanced admin permissions: COMMAND_PERMISSIONS map enforces rank-based access (Helper through Zahre hierarchy), demotion requires Admin+
 - Fixed boost pad collision bug where 3rd pad would slow players
 - Enhanced ban system with localStorage persistence and countdown display
 - Enhanced kick system with proper overlay and localStorage tracking
