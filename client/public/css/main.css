@@ -566,7 +566,7 @@ span {
 }
 
 .rightColumn {
-        width: 280px;
+        width: 320px;
         animation: slideInRight 0.6s ease-out;
         height: 420px;
 }
@@ -1043,7 +1043,7 @@ span {
 }
 
 .rightColumn {
-        width: 280px;
+        width: 320px;
         animation: slideInRight 0.6s ease-out;
         height: 420px;
 }
