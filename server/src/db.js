@@ -8,15 +8,39 @@ export let pool = null;
 export let db = null;
 export let isDatabaseConnected = false;
 
-if (process.env.DATABASE_URL) {
-    try {
-        pool = new Pool({ 
+function getConnectionConfig() {
+    if (process.env.PGHOST && process.env.PGUSER && process.env.PGDATABASE) {
+        return {
+            host: process.env.PGHOST,
+            port: parseInt(process.env.PGPORT || '5432'),
+            user: process.env.PGUSER,
+            password: process.env.PGPASSWORD || '',
+            database: process.env.PGDATABASE,
+            ssl: false,
+            max: 10,
+            idleTimeoutMillis: 30000,
+            connectionTimeoutMillis: 10000
+        };
+    }
+    
+    if (process.env.DATABASE_URL) {
+        return { 
             connectionString: process.env.DATABASE_URL,
             ssl: process.env.DATABASE_URL.includes('neon.tech') ? { rejectUnauthorized: false } : false,
             max: 10,
             idleTimeoutMillis: 30000,
             connectionTimeoutMillis: 10000
-        });
+        };
+    }
+    
+    return null;
+}
+
+const connectionConfig = getConnectionConfig();
+
+if (connectionConfig) {
+    try {
+        pool = new Pool(connectionConfig);
         db = drizzle(pool, { schema });
         
         pool.on('error', (err) => {
@@ -35,7 +59,7 @@ if (process.env.DATABASE_URL) {
         console.log('[Database] Server will run in guest-only mode (no account persistence)');
     }
 } else {
-    console.log('[Database] No DATABASE_URL configured');
+    console.log('[Database] No database configuration found');
     console.log('[Database] Server will run in guest-only mode (no account persistence)');
-    console.log('[Database] To enable accounts, add your Neon DATABASE_URL in Secrets');
+    console.log('[Database] To enable accounts, provision a PostgreSQL database');
 }

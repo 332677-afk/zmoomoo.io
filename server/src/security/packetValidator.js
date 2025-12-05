@@ -420,11 +420,11 @@ const schemas = {
 
     [OPCODES.REGISTER]: {
         validate: (data, ctx) => {
-            if (!Array.isArray(data) || data.length < 2) {
-                return { valid: false, reason: 'Register requires username and password' };
+            if (!Array.isArray(data) || data.length < 4) {
+                return { valid: false, reason: 'Register requires username, password, displayName, and email' };
             }
 
-            const [username, password, displayName] = data;
+            const [username, password, displayName, email] = data;
 
             if (typeof username !== 'string') {
                 return { valid: false, reason: 'Username must be string' };
@@ -432,6 +432,10 @@ const schemas = {
 
             if (typeof password !== 'string') {
                 return { valid: false, reason: 'Password must be string' };
+            }
+
+            if (typeof email !== 'string') {
+                return { valid: false, reason: 'Email must be string' };
             }
 
             const sanitizedUsername = sanitizeString(username, MAX_USERNAME_LENGTH);
@@ -443,12 +447,22 @@ const schemas = {
                 return { valid: false, reason: 'Invalid password length' };
             }
 
+            const emailTrimmed = email.toLowerCase().trim();
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailTrimmed || !emailRegex.test(emailTrimmed)) {
+                return { valid: false, reason: 'Invalid email format' };
+            }
+
             const sanitized = [sanitizedUsername, password];
             
-            if (displayName !== undefined) {
+            if (displayName !== undefined && typeof displayName === 'string') {
                 const sanitizedDisplay = sanitizeString(displayName, MAX_DISPLAY_NAME_LENGTH);
                 sanitized.push(sanitizedDisplay || sanitizedUsername);
+            } else {
+                sanitized.push(sanitizedUsername);
             }
+            
+            sanitized.push(emailTrimmed);
 
             return { valid: true, sanitizedData: sanitized };
         }
