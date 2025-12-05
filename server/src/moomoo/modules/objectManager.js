@@ -184,9 +184,6 @@ export class ObjectManager {
                 tmpObj.sid = sid;
             }
             tmpObj.init(x, y, dir, s, type, data, owner);
-            if (data && data.name) {
-                console.log('[DEBUG PLACE]', data.name, '- boostSpeed:', tmpObj.boostSpeed, 'ignoreCollision:', tmpObj.ignoreCollision, 'id:', data.id);
-            }
             if (server) {
                 this.setObjectGrids(tmpObj);
                 if (tmpObj.doUpdate) {
@@ -272,9 +269,6 @@ export class ObjectManager {
             if ((player.ghostMode || player.noclipMode) && !other.isPlayer) {
                 return false;
             }
-            if (other.boostSpeed) {
-                console.log('[DEBUG BOOST] Checking collision with boost pad - player:', player.x.toFixed(0), player.y.toFixed(0), 'obj:', other.x.toFixed(0), other.y.toFixed(0), 'boostSpeed:', other.boostSpeed);
-            }
             var dx = player.x - other.x;
             var dy = player.y - other.y;
             var tmpLen = player.scale + other.scale;
@@ -318,29 +312,13 @@ export class ObjectManager {
                             }
                         }
                     } else {
-                        console.log('[DEBUG BOOST] ignoreCollision object detected:', other.name, 'trap:', other.trap, 'boostSpeed:', other.boostSpeed, 'group:', other.group?.name);
                         if (other.trap && !player.noTrap && other.owner != player && !(other.owner && other.owner.team && other.owner.team == player.team)) {
                             player.lockMove = true;
                             other.hideFromEnemy = false;
                         } else {
                             if (other.boostSpeed) {
-                                console.log('[DEBUG BOOST] Boost pad triggered! boostSpeed:', other.boostSpeed, 'lastBoostTime:', player.lastBoostTime);
-                                if (!player.lastBoostTime || Date.now() - player.lastBoostTime > 100) {
-                                    player.lastBoostTime = Date.now();
-                                    var boostForce = other.boostSpeed * 80 * (other.weightM || 1);
-                                    var boostDir;
-                                    if (player.moveDir !== undefined && player.moveDir !== null) {
-                                        boostDir = player.moveDir;
-                                    } else if (mathABS(player.xVel) > 0.05 || mathABS(player.yVel) > 0.05) {
-                                        boostDir = Math.atan2(player.yVel, player.xVel);
-                                    } else {
-                                        boostDir = other.dir;
-                                    }
-                                    console.log('[DEBUG BOOST] Applying boost - force:', boostForce, 'dir:', boostDir, 'before xVel:', player.xVel, 'yVel:', player.yVel);
-                                    player.xVel += boostForce * mathCOS(boostDir);
-                                    player.yVel += boostForce * mathSIN(boostDir);
-                                    console.log('[DEBUG BOOST] After boost - xVel:', player.xVel, 'yVel:', player.yVel);
-                                }
+                                player.xVel += delta * other.boostSpeed * (other.weightM || 1) * mathCOS(other.dir);
+                                player.yVel += delta * other.boostSpeed * (other.weightM || 1) * mathSIN(other.dir);
                             } else {
                                 if (other.healCol) {
                                     player.healCol = other.healCol;
