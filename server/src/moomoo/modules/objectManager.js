@@ -317,19 +317,19 @@ export class ObjectManager {
                             other.hideFromEnemy = false;
                         } else {
                             if (other.boostSpeed) {
-                                if (!player.lastBoostTime || Date.now() - player.lastBoostTime > 200) {
+                                if (!player.lastBoostTime || Date.now() - player.lastBoostTime > 100) {
                                     player.lastBoostTime = Date.now();
-                                    var boostForce = other.boostSpeed * 40 * (other.weightM || 1);
+                                    var boostForce = other.boostSpeed * 80 * (other.weightM || 1);
                                     var boostDir;
                                     if (player.moveDir !== undefined) {
                                         boostDir = player.moveDir;
-                                    } else if (mathABS(player.xVel) > 0.1 || mathABS(player.yVel) > 0.1) {
+                                    } else if (mathABS(player.xVel) > 0.05 || mathABS(player.yVel) > 0.05) {
                                         boostDir = Math.atan2(player.yVel, player.xVel);
                                     } else {
                                         boostDir = other.dir;
                                     }
-                                    player.xVel = boostForce * mathCOS(boostDir);
-                                    player.yVel = boostForce * mathSIN(boostDir);
+                                    player.xVel += boostForce * mathCOS(boostDir);
+                                    player.yVel += boostForce * mathSIN(boostDir);
                                 }
                             } else {
                                 if (other.healCol) {

@@ -657,9 +657,9 @@ function resendCode() {
 }
 
 function verifyResetCode() {
-    var code = document.getElementById("verifyCode").value.trim();
-    if (!code || code.length !== 6) {
-        showForgotPasswordError("Please enter the 6-digit verification code");
+    var code = document.getElementById("verifyCode").value.trim().toUpperCase();
+    if (!code || code.length !== 8) {
+        showForgotPasswordError("Please enter the 8-character verification code");
         return;
     }
     
