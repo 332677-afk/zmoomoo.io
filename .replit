@@ -1,4 +1,4 @@
-modules = ["nodejs-20", "web", "bash", "postgresql-16"]
+modules = ["nodejs-20", "web", "bash"]
 [agent]
 expertMode = true
 integrations = ["resend:1.0.0"]
@@ -73,6 +73,10 @@ externalPort = 3003
 [[ports]]
 localPort = 41837
 externalPort = 6800
+
+[[ports]]
+localPort = 43141
+externalPort = 8081
 
 [[ports]]
 localPort = 43931
