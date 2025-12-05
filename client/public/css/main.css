@@ -1673,9 +1673,10 @@ span {
 .leaderboardItem {
         float: left;
         display: inline-block;
-        max-width: none;
+        max-width: 150px;
         white-space: nowrap;
-        overflow: visible;
+        overflow: hidden;
+        text-overflow: ellipsis;
         font-size: 22px;
 }
 

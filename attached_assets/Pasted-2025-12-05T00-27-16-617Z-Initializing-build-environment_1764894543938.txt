@@ -1,0 +1,311 @@
+2025-12-05T00:27:16.617Z	Initializing build environment...
+2025-12-05T00:27:18.482Z	Success: Finished initializing build environment
+2025-12-05T00:27:18.879Z	Cloning repository...
+2025-12-05T00:27:20.245Z	Restoring from dependencies cache
+2025-12-05T00:27:20.247Z	Restoring from build output cache
+2025-12-05T00:27:20.252Z	Detected the following tools from environment: npm@10.9.2, nodejs@22.16.0
+2025-12-05T00:27:20.549Z	Installing project dependencies: npm clean-install --progress=false
+2025-12-05T00:27:23.570Z	npm warn deprecated urix@0.1.0: Please see https://github.com/lydell/urix#deprecated
+2025-12-05T00:27:23.811Z	npm warn deprecated source-map-url@0.4.1: See https://github.com/lydell/source-map-url#deprecated
+2025-12-05T00:27:23.903Z	npm warn deprecated resolve-url@0.2.1: https://github.com/lydell/resolve-url#deprecated
+2025-12-05T00:27:23.903Z	npm warn deprecated rimraf@2.7.1: Rimraf versions prior to v4 are no longer supported
+2025-12-05T00:27:24.008Z	npm warn deprecated source-map-resolve@0.5.3: See https://github.com/lydell/source-map-resolve#deprecated
+2025-12-05T00:27:24.211Z	npm warn deprecated uuid@3.4.0: Please upgrade  to version 7 or higher.  Older versions may use Math.random() in certain circumstances, which is known to be problematic.  See https://v8.dev/blog/math-random for details.
+2025-12-05T00:27:24.245Z	npm warn deprecated move-concurrently@1.0.1: This package is no longer supported.
+2025-12-05T00:27:24.344Z	npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+2025-12-05T00:27:24.393Z	npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2025-12-05T00:27:24.439Z	npm warn deprecated fs-write-stream-atomic@1.0.10: This package is no longer supported.
+2025-12-05T00:27:24.704Z	npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+2025-12-05T00:27:24.869Z	npm warn deprecated figgy-pudding@3.5.2: This module is no longer supported.
+2025-12-05T00:27:25.058Z	npm warn deprecated copy-concurrently@1.0.5: This package is no longer supported.
+2025-12-05T00:27:25.495Z	npm warn deprecated @esbuild-kit/esm-loader@2.6.5: Merged into tsx: https://tsx.is
+2025-12-05T00:27:25.521Z	npm warn deprecated @esbuild-kit/core-utils@3.3.2: Merged into tsx: https://tsx.is
+2025-12-05T00:27:34.983Z	
+2025-12-05T00:27:34.984Z	added 786 packages, and audited 789 packages in 14s
+2025-12-05T00:27:34.984Z	
+2025-12-05T00:27:34.984Z	67 packages are looking for funding
+2025-12-05T00:27:34.984Z	  run `npm fund` for details
+2025-12-05T00:27:35.010Z	
+2025-12-05T00:27:35.010Z	17 vulnerabilities (11 moderate, 6 high)
+2025-12-05T00:27:35.010Z	
+2025-12-05T00:27:35.010Z	To address issues that do not require attention, run:
+2025-12-05T00:27:35.010Z	  npm audit fix
+2025-12-05T00:27:35.010Z	
+2025-12-05T00:27:35.010Z	To address all issues (including breaking changes), run:
+2025-12-05T00:27:35.010Z	  npm audit fix --force
+2025-12-05T00:27:35.011Z	
+2025-12-05T00:27:35.011Z	Run `npm audit` for details.
+2025-12-05T00:27:35.228Z	Executing user build command: npm run build
+2025-12-05T00:27:35.452Z	
+2025-12-05T00:27:35.452Z	> moomoo-nurotech@1.0.0 build
+2025-12-05T00:27:35.452Z	> npm run build --workspace client
+2025-12-05T00:27:35.452Z	
+2025-12-05T00:27:35.606Z	
+2025-12-05T00:27:35.606Z	> moomoo-client@1.0.0 build
+2025-12-05T00:27:35.606Z	> cross-env NODE_ENV=production webpack --config webpack.config.js
+2025-12-05T00:27:35.606Z	
+2025-12-05T00:27:39.641Z	Hash: a52aa1f2fdce85abb980
+2025-12-05T00:27:39.642Z	Version: webpack 4.47.0
+2025-12-05T00:27:39.642Z	Time: 3428ms
+2025-12-05T00:27:39.642Z	Built at: 12/05/2025 12:27:39 AM
+2025-12-05T00:27:39.642Z	                                              Asset        Size  Chunks                    Chunk Names
+2025-12-05T00:27:39.642Z	../css/fonts/qWcyB624q4L_C4jGQ9IK0O_dFlnrtREl.woff2    19.2 KiB          [emitted]         
+2025-12-05T00:27:39.642Z	                         ../css/hammersmith-one.css   687 bytes          [emitted]         
+2025-12-05T00:27:39.642Z	                                    ../css/main.css      58 KiB          [emitted]         
+2025-12-05T00:27:39.642Z	                          ../css/material-icons.css   613 bytes          [emitted]         
+2025-12-05T00:27:39.642Z	                               ../docs/versions.txt    23.5 KiB          [emitted]         
+2025-12-05T00:27:39.647Z	                                  ../html/play.html    49.5 KiB          [emitted]         
+2025-12-05T00:27:39.647Z	                    ../img/accessories/access_1.png    2.33 KiB          [emitted]         
+2025-12-05T00:27:39.647Z	                   ../img/accessories/access_10.png    1.82 KiB          [emitted]         
+2025-12-05T00:27:39.651Z	                   ../img/accessories/access_11.png     1.6 KiB          [emitted]         
+2025-12-05T00:27:39.651Z	                   ../img/accessories/access_12.png   921 bytes          [emitted]         
+2025-12-05T00:27:39.651Z	                   ../img/accessories/access_13.png    1.88 KiB          [emitted]         
+2025-12-05T00:27:39.652Z	                   ../img/accessories/access_14.png    1.65 KiB          [emitted]         
+2025-12-05T00:27:39.652Z	                   ../img/accessories/access_15.png    2.08 KiB          [emitted]         
+2025-12-05T00:27:39.652Z	                   ../img/accessories/access_16.png    2.14 KiB          [emitted]         
+2025-12-05T00:27:39.652Z	                   ../img/accessories/access_17.png    4.19 KiB          [emitted]         
+2025-12-05T00:27:39.652Z	                   ../img/accessories/access_18.png    2.92 KiB          [emitted]         
+2025-12-05T00:27:39.652Z	                   ../img/accessories/access_19.png    1.54 KiB          [emitted]         
+2025-12-05T00:27:39.652Z	                    ../img/accessories/access_2.png    1.81 KiB          [emitted]         
+2025-12-05T00:27:39.652Z	                   ../img/accessories/access_20.png    2.27 KiB          [emitted]         
+2025-12-05T00:27:39.652Z	                   ../img/accessories/access_21.png    2.18 KiB          [emitted]         
+2025-12-05T00:27:39.653Z	                    ../img/accessories/access_3.png    2.21 KiB          [emitted]         
+2025-12-05T00:27:39.653Z	                    ../img/accessories/access_4.png    2.65 KiB          [emitted]         
+2025-12-05T00:27:39.655Z	                    ../img/accessories/access_5.png    1.69 KiB          [emitted]         
+2025-12-05T00:27:39.655Z	                    ../img/accessories/access_6.png     3.5 KiB          [emitted]         
+2025-12-05T00:27:39.655Z	                    ../img/accessories/access_7.png    2.86 KiB          [emitted]         
+2025-12-05T00:27:39.655Z	                    ../img/accessories/access_8.png    2.65 KiB          [emitted]         
+2025-12-05T00:27:39.655Z	                    ../img/accessories/access_9.png    2.28 KiB          [emitted]         
+2025-12-05T00:27:39.656Z	                          ../img/animals/bull_1.png    5.19 KiB          [emitted]         
+2025-12-05T00:27:39.656Z	                          ../img/animals/bull_2.png    5.32 KiB          [emitted]         
+2025-12-05T00:27:39.656Z	                       ../img/animals/chicken_1.png    3.67 KiB          [emitted]         
+2025-12-05T00:27:39.656Z	                           ../img/animals/cow_1.png    5.09 KiB          [emitted]         
+2025-12-05T00:27:39.656Z	                         ../img/animals/crate_1.png   656 bytes          [emitted]         
+2025-12-05T00:27:39.656Z	                          ../img/animals/duck_1.png    4.79 KiB          [emitted]         
+2025-12-05T00:27:39.656Z	                           ../img/animals/enemy.png    9.08 KiB          [emitted]         
+2025-12-05T00:27:39.656Z	                          ../img/animals/fish_1.png    2.38 KiB          [emitted]         
+2025-12-05T00:27:39.656Z	                           ../img/animals/pig_1.png    5.39 KiB          [emitted]         
+2025-12-05T00:27:39.656Z	                         ../img/animals/sheep_1.png    6.01 KiB          [emitted]         
+2025-12-05T00:27:39.656Z	                             ../img/animals/sid.png    9.07 KiB          [emitted]         
+2025-12-05T00:27:39.656Z	                           ../img/animals/vince.png    7.66 KiB          [emitted]         
+2025-12-05T00:27:39.656Z	                          ../img/animals/wolf_1.png    8.07 KiB          [emitted]         
+2025-12-05T00:27:39.656Z	                          ../img/animals/wolf_2.png    11.3 KiB          [emitted]         
+2025-12-05T00:27:39.656Z	                       ../img/effects/explosion.jpg     138 KiB          [emitted]         
+2025-12-05T00:27:39.656Z	                                 ../img/favicon.png   966 bytes          [emitted]         
+2025-12-05T00:27:39.656Z	                              ../img/hats/hat_1.png    4.22 KiB          [emitted]         
+2025-12-05T00:27:39.657Z	                             ../img/hats/hat_10.png    2.84 KiB          [emitted]         
+2025-12-05T00:27:39.657Z	                             ../img/hats/hat_11.png    3.75 KiB          [emitted]         
+2025-12-05T00:27:39.657Z	                           ../img/hats/hat_11_p.png    4.32 KiB          [emitted]         
+2025-12-05T00:27:39.657Z	                         ../img/hats/hat_11_top.png    2.36 KiB          [emitted]         
+2025-12-05T00:27:39.659Z	                             ../img/hats/hat_12.png    2.96 KiB          [emitted]         
+2025-12-05T00:27:39.659Z	                             ../img/hats/hat_13.png    4.88 KiB          [emitted]         
+2025-12-05T00:27:39.659Z	                             ../img/hats/hat_14.png    1.94 KiB          [emitted]         
+2025-12-05T00:27:39.659Z	                           ../img/hats/hat_14_p.png    1.35 KiB          [emitted]         
+2025-12-05T00:27:39.659Z	                         ../img/hats/hat_14_top.png   979 bytes          [emitted]         
+2025-12-05T00:27:39.663Z	                             ../img/hats/hat_15.png     2.8 KiB          [emitted]         
+2025-12-05T00:27:39.663Z	                             ../img/hats/hat_18.png    4.23 KiB          [emitted]         
+2025-12-05T00:27:39.663Z	                              ../img/hats/hat_2.png    3.74 KiB          [emitted]         
+2025-12-05T00:27:39.663Z	                             ../img/hats/hat_20.png    4.58 KiB          [emitted]         
+2025-12-05T00:27:39.663Z	                             ../img/hats/hat_21.png    4.12 KiB          [emitted]         
+2025-12-05T00:27:39.663Z	                             ../img/hats/hat_22.png     4.3 KiB          [emitted]         
+2025-12-05T00:27:39.663Z	                             ../img/hats/hat_23.png    4.61 KiB          [emitted]         
+2025-12-05T00:27:39.663Z	                             ../img/hats/hat_26.png       5 KiB          [emitted]         
+2025-12-05T00:27:39.664Z	                             ../img/hats/hat_27.png    2.97 KiB          [emitted]         
+2025-12-05T00:27:39.664Z	                             ../img/hats/hat_28.png    5.54 KiB          [emitted]         
+2025-12-05T00:27:39.664Z	                             ../img/hats/hat_29.png    4.94 KiB          [emitted]         
+2025-12-05T00:27:39.666Z	                             ../img/hats/hat_30.png     5.2 KiB          [emitted]         
+2025-12-05T00:27:39.675Z	                             ../img/hats/hat_31.png    3.77 KiB          [emitted]         
+2025-12-05T00:27:39.675Z	                             ../img/hats/hat_32.png    3.69 KiB          [emitted]         
+2025-12-05T00:27:39.675Z	                             ../img/hats/hat_35.png    2.68 KiB          [emitted]         
+2025-12-05T00:27:39.675Z	                             ../img/hats/hat_36.png    4.17 KiB          [emitted]         
+2025-12-05T00:27:39.675Z	                             ../img/hats/hat_37.png    4.73 KiB          [emitted]         
+2025-12-05T00:27:39.675Z	                             ../img/hats/hat_38.png    5.08 KiB          [emitted]         
+2025-12-05T00:27:39.676Z	                              ../img/hats/hat_4.png    3.78 KiB          [emitted]         
+2025-12-05T00:27:39.676Z	                             ../img/hats/hat_40.png    5.62 KiB          [emitted]         
+2025-12-05T00:27:39.676Z	                             ../img/hats/hat_42.png    4.49 KiB          [emitted]         
+2025-12-05T00:27:39.676Z	                             ../img/hats/hat_43.png    3.92 KiB          [emitted]         
+2025-12-05T00:27:39.676Z	                             ../img/hats/hat_44.png    4.96 KiB          [emitted]         
+2025-12-05T00:27:39.676Z	                             ../img/hats/hat_45.png    7.58 KiB          [emitted]         
+2025-12-05T00:27:39.676Z	                             ../img/hats/hat_46.png    5.27 KiB          [emitted]         
+2025-12-05T00:27:39.676Z	                             ../img/hats/hat_48.png    1.41 KiB          [emitted]         
+2025-12-05T00:27:39.676Z	                             ../img/hats/hat_49.png    4.26 KiB          [emitted]         
+2025-12-05T00:27:39.676Z	                              ../img/hats/hat_5.png    4.48 KiB          [emitted]         
+2025-12-05T00:27:39.676Z	                             ../img/hats/hat_50.png    3.11 KiB          [emitted]         
+2025-12-05T00:27:39.676Z	                             ../img/hats/hat_51.png    3.41 KiB          [emitted]         
+2025-12-05T00:27:39.676Z	                             ../img/hats/hat_52.png    6.91 KiB          [emitted]         
+2025-12-05T00:27:39.679Z	                             ../img/hats/hat_53.png    1.55 KiB          [emitted]         
+2025-12-05T00:27:39.679Z	                           ../img/hats/hat_53_p.png    2.29 KiB          [emitted]         
+2025-12-05T00:27:39.679Z	                         ../img/hats/hat_53_top.png    1.28 KiB          [emitted]         
+2025-12-05T00:27:39.680Z	                             ../img/hats/hat_55.png    9.04 KiB          [emitted]         
+2025-12-05T00:27:39.680Z	                             ../img/hats/hat_56.png    6.78 KiB          [emitted]         
+2025-12-05T00:27:39.680Z	                             ../img/hats/hat_57.png    16.9 KiB          [emitted]         
+2025-12-05T00:27:39.680Z	                             ../img/hats/hat_58.png    10.8 KiB          [emitted]         
+2025-12-05T00:27:39.680Z	                              ../img/hats/hat_6.png    4.25 KiB          [emitted]         
+2025-12-05T00:27:39.680Z	                              ../img/hats/hat_7.png    5.58 KiB          [emitted]         
+2025-12-05T00:27:39.680Z	                              ../img/hats/hat_8.png    2.73 KiB          [emitted]         
+2025-12-05T00:27:39.680Z	                              ../img/hats/hat_9.png    3.58 KiB          [emitted]         
+2025-12-05T00:27:39.680Z	                             ../img/icons/crown.png    8.52 KiB          [emitted]         
+2025-12-05T00:27:39.680Z	                            ../img/icons/shield.png    18.4 KiB          [emitted]         
+2025-12-05T00:27:39.680Z	                             ../img/icons/skull.png    10.8 KiB          [emitted]         
+2025-12-05T00:27:39.683Z	                      ../img/promotion/banner_4.png    98.6 KiB          [emitted]         
+2025-12-05T00:27:39.683Z	                      ../img/resources/food_ico.png    11.7 KiB          [emitted]         
+2025-12-05T00:27:39.683Z	                      ../img/resources/gold_ico.png      12 KiB          [emitted]         
+2025-12-05T00:27:39.683Z	                     ../img/resources/stone_ico.png    10.1 KiB          [emitted]         
+2025-12-05T00:27:39.683Z	                      ../img/resources/wood_ico.png    11.6 KiB          [emitted]         
+2025-12-05T00:27:39.683Z	                         ../img/weapons/arrow_1.png    1.34 KiB          [emitted]         
+2025-12-05T00:27:39.683Z	                           ../img/weapons/axe_1.png    1.58 KiB          [emitted]         
+2025-12-05T00:27:39.683Z	                         ../img/weapons/axe_1_d.png    2.98 KiB          [emitted]         
+2025-12-05T00:27:39.684Z	                         ../img/weapons/axe_1_e.png    16.4 KiB          [emitted]         
+2025-12-05T00:27:39.684Z	                         ../img/weapons/axe_1_g.png    3.09 KiB          [emitted]         
+2025-12-05T00:27:39.684Z	                         ../img/weapons/axe_1_r.png    13.5 KiB          [emitted]         
+2025-12-05T00:27:39.684Z	                           ../img/weapons/bat_1.png    3.33 KiB          [emitted]         
+2025-12-05T00:27:39.684Z	                         ../img/weapons/bat_1_d.png    4.01 KiB          [emitted]         
+2025-12-05T00:27:39.684Z	                         ../img/weapons/bat_1_e.png    15.7 KiB          [emitted]         
+2025-12-05T00:27:39.684Z	                         ../img/weapons/bat_1_g.png     2.8 KiB          [emitted]         
+2025-12-05T00:27:39.684Z	                         ../img/weapons/bat_1_r.png    14.1 KiB          [emitted]         
+2025-12-05T00:27:39.687Z	                           ../img/weapons/bow_1.png    3.04 KiB          [emitted]         
+2025-12-05T00:27:39.687Z	                         ../img/weapons/bow_1_e.png    15.2 KiB          [emitted]         
+2025-12-05T00:27:39.687Z	                         ../img/weapons/bow_1_g.png    3.54 KiB          [emitted]         
+2025-12-05T00:27:39.687Z	                         ../img/weapons/bow_1_r.png    14.6 KiB          [emitted]         
+2025-12-05T00:27:39.690Z	                        ../img/weapons/bullet_1.png   675 bytes          [emitted]         
+2025-12-05T00:27:39.690Z	                      ../img/weapons/crossbow_1.png    2.78 KiB          [emitted]         
+2025-12-05T00:27:39.690Z	                    ../img/weapons/crossbow_1_d.png    2.99 KiB          [emitted]         
+2025-12-05T00:27:39.690Z	                    ../img/weapons/crossbow_1_e.png    17.7 KiB          [emitted]         
+2025-12-05T00:27:39.690Z	                    ../img/weapons/crossbow_1_g.png     3.2 KiB          [emitted]         
+2025-12-05T00:27:39.690Z	                    ../img/weapons/crossbow_1_r.png    15.7 KiB          [emitted]         
+2025-12-05T00:27:39.690Z	                      ../img/weapons/crossbow_2.png    4.09 KiB          [emitted]         
+2025-12-05T00:27:39.690Z	                    ../img/weapons/crossbow_2_d.png    4.41 KiB          [emitted]         
+2025-12-05T00:27:39.690Z	                    ../img/weapons/crossbow_2_e.png    19.8 KiB          [emitted]         
+2025-12-05T00:27:39.690Z	                    ../img/weapons/crossbow_2_g.png     4.5 KiB          [emitted]         
+2025-12-05T00:27:39.690Z	                    ../img/weapons/crossbow_2_r.png    20.6 KiB          [emitted]         
+2025-12-05T00:27:39.690Z	                        ../img/weapons/dagger_1.png   760 bytes          [emitted]         
+2025-12-05T00:27:39.691Z	                      ../img/weapons/dagger_1_d.png    3.48 KiB          [emitted]         
+2025-12-05T00:27:39.691Z	                      ../img/weapons/dagger_1_e.png    15.1 KiB          [emitted]         
+2025-12-05T00:27:39.691Z	                      ../img/weapons/dagger_1_g.png    2.42 KiB          [emitted]         
+2025-12-05T00:27:39.691Z	                      ../img/weapons/dagger_1_r.png    16.9 KiB          [emitted]         
+2025-12-05T00:27:39.691Z	                          ../img/weapons/grab_1.png    5.89 KiB          [emitted]         
+2025-12-05T00:27:39.691Z	                        ../img/weapons/grab_1_d.png    6.13 KiB          [emitted]         
+2025-12-05T00:27:39.691Z	                        ../img/weapons/grab_1_e.png      12 KiB          [emitted]         
+2025-12-05T00:27:39.699Z	                        ../img/weapons/grab_1_g.png    6.04 KiB          [emitted]         
+2025-12-05T00:27:39.700Z	                        ../img/weapons/grab_1_r.png    5.68 KiB          [emitted]         
+2025-12-05T00:27:39.700Z	                     ../img/weapons/great_axe_1.png    2.05 KiB          [emitted]         
+2025-12-05T00:27:39.700Z	                   ../img/weapons/great_axe_1_d.png     3.5 KiB          [emitted]         
+2025-12-05T00:27:39.700Z	                   ../img/weapons/great_axe_1_e.png    21.4 KiB          [emitted]         
+2025-12-05T00:27:39.700Z	                   ../img/weapons/great_axe_1_g.png    3.62 KiB          [emitted]         
+2025-12-05T00:27:39.700Z	                   ../img/weapons/great_axe_1_r.png    16.9 KiB          [emitted]         
+2025-12-05T00:27:39.707Z	                  ../img/weapons/great_hammer_1.png   925 bytes          [emitted]         
+2025-12-05T00:27:39.707Z	                ../img/weapons/great_hammer_1_d.png    1.05 KiB          [emitted]         
+2025-12-05T00:27:39.707Z	                ../img/weapons/great_hammer_1_e.png      15 KiB          [emitted]         
+2025-12-05T00:27:39.707Z	                ../img/weapons/great_hammer_1_g.png   810 bytes          [emitted]         
+2025-12-05T00:27:39.707Z	                ../img/weapons/great_hammer_1_r.png    13.5 KiB          [emitted]         
+2025-12-05T00:27:39.707Z	                        ../img/weapons/hammer_1.png   306 bytes          [emitted]         
+2025-12-05T00:27:39.707Z	                      ../img/weapons/hammer_1_d.png  1020 bytes          [emitted]         
+2025-12-05T00:27:39.707Z	                      ../img/weapons/hammer_1_e.png    9.02 KiB          [emitted]         
+2025-12-05T00:27:39.707Z	                      ../img/weapons/hammer_1_g.png   693 bytes          [emitted]         
+2025-12-05T00:27:39.707Z	                      ../img/weapons/hammer_1_r.png    8.33 KiB          [emitted]         
+2025-12-05T00:27:39.707Z	                        ../img/weapons/musket_1.png   926 bytes          [emitted]         
+2025-12-05T00:27:39.707Z	                      ../img/weapons/musket_1_d.png    3.59 KiB          [emitted]         
+2025-12-05T00:27:39.707Z	                      ../img/weapons/musket_1_e.png    16.8 KiB          [emitted]         
+2025-12-05T00:27:39.707Z	                      ../img/weapons/musket_1_g.png    3.47 KiB          [emitted]         
+2025-12-05T00:27:39.707Z	                      ../img/weapons/musket_1_r.png    3.79 KiB          [emitted]         
+2025-12-05T00:27:39.709Z	                       ../img/weapons/samurai_1.png     1.4 KiB          [emitted]         
+2025-12-05T00:27:39.709Z	                     ../img/weapons/samurai_1_d.png    3.01 KiB          [emitted]         
+2025-12-05T00:27:39.709Z	                     ../img/weapons/samurai_1_e.png    17.3 KiB          [emitted]         
+2025-12-05T00:27:39.709Z	                     ../img/weapons/samurai_1_g.png    2.71 KiB          [emitted]         
+2025-12-05T00:27:39.709Z	                     ../img/weapons/samurai_1_r.png    19.7 KiB          [emitted]         
+2025-12-05T00:27:39.709Z	                        ../img/weapons/shield_1.png    2.56 KiB          [emitted]         
+2025-12-05T00:27:39.709Z	                      ../img/weapons/shield_1_d.png    3.48 KiB          [emitted]         
+2025-12-05T00:27:39.709Z	                      ../img/weapons/shield_1_e.png    13.9 KiB          [emitted]         
+2025-12-05T00:27:39.709Z	                      ../img/weapons/shield_1_g.png    3.73 KiB          [emitted]         
+2025-12-05T00:27:39.709Z	                      ../img/weapons/shield_1_r.png    10.2 KiB          [emitted]         
+2025-12-05T00:27:39.709Z	                         ../img/weapons/spear_1.png     1.7 KiB          [emitted]         
+2025-12-05T00:27:39.709Z	                       ../img/weapons/spear_1_d.png    2.51 KiB          [emitted]         
+2025-12-05T00:27:39.709Z	                       ../img/weapons/spear_1_e.png      19 KiB          [emitted]         
+2025-12-05T00:27:39.709Z	                       ../img/weapons/spear_1_g.png    1.96 KiB          [emitted]         
+2025-12-05T00:27:39.709Z	                       ../img/weapons/spear_1_r.png    5.49 KiB          [emitted]         
+2025-12-05T00:27:39.709Z	                         ../img/weapons/stick_1.png   687 bytes          [emitted]         
+2025-12-05T00:27:39.709Z	                       ../img/weapons/stick_1_d.png    2.31 KiB          [emitted]         
+2025-12-05T00:27:39.709Z	                       ../img/weapons/stick_1_e.png    6.06 KiB          [emitted]         
+2025-12-05T00:27:39.710Z	                       ../img/weapons/stick_1_g.png    2.31 KiB          [emitted]         
+2025-12-05T00:27:39.710Z	                       ../img/weapons/stick_1_r.png    2.89 KiB          [emitted]         
+2025-12-05T00:27:39.710Z	                   ../img/weapons/superhammer_1.png     154 KiB          [emitted]         
+2025-12-05T00:27:39.710Z	                         ../img/weapons/sword_1.png   622 bytes          [emitted]         
+2025-12-05T00:27:39.710Z	                       ../img/weapons/sword_1_d.png    2.49 KiB          [emitted]         
+2025-12-05T00:27:39.710Z	                       ../img/weapons/sword_1_e.png    15.5 KiB          [emitted]         
+2025-12-05T00:27:39.710Z	                       ../img/weapons/sword_1_g.png    1.13 KiB          [emitted]         
+2025-12-05T00:27:39.710Z	                       ../img/weapons/sword_1_r.png    12.5 KiB          [emitted]         
+2025-12-05T00:27:39.710Z	                        ../libs/jquery-3.2.1.min.js     156 KiB          [emitted]         
+2025-12-05T00:27:39.710Z	                               ../libs/jquery-ui.js     509 KiB          [emitted]  [big]  
+2025-12-05T00:27:39.710Z	                               ../libs/moomoo-js.js     120 KiB          [emitted]         
+2025-12-05T00:27:39.710Z	                                   ../manifest.json   417 bytes          [emitted]         
+2025-12-05T00:27:39.710Z	                                      ../serverData    15 bytes          [emitted]         
+2025-12-05T00:27:39.710Z	                                          bundle.js     192 KiB       0  [emitted]         main
+2025-12-05T00:27:39.710Z	Entrypoint main = bundle.js
+2025-12-05T00:27:39.710Z	[19] ./src/index.js 137 KiB {0} [built]
+2025-12-05T00:27:39.710Z	[20] ./src/libs/modernizr.js 2.59 KiB {0} [built]
+2025-12-05T00:27:39.710Z	[21] ./src/libs/io-client.js 4.56 KiB {0} [built]
+2025-12-05T00:27:39.711Z	[39] ./src/libs/utils.js 6.73 KiB {0} [built]
+2025-12-05T00:27:39.711Z	[40] ./src/libs/animText.js 1.74 KiB {0} [built]
+2025-12-05T00:27:39.711Z	[41] ./src/config.js 66 bytes {0} [built]
+2025-12-05T00:27:39.711Z	[44] ./src/data/gameObject.js 2.34 KiB {0} [built]
+2025-12-05T00:27:39.711Z	[45] ./src/data/items.js 75 bytes {0} [built]
+2025-12-05T00:27:39.711Z	[47] ./src/data/objectManager.js 9.52 KiB {0} [built]
+2025-12-05T00:27:39.711Z	[48] ./src/data/player.js 25.6 KiB {0} [built]
+2025-12-05T00:27:39.711Z	[54] ./src/data/store.js 75 bytes {0} [built]
+2025-12-05T00:27:39.711Z	[56] ./src/data/projectile.js 4.49 KiB {0} [built]
+2025-12-05T00:27:39.711Z	[57] ./src/data/projectileManager.js 825 bytes {0} [built]
+2025-12-05T00:27:39.711Z	[58] ./src/data/aiManager.js 4.13 KiB {0} [built]
+2025-12-05T00:27:39.711Z	[59] ./src/data/ai.js 11.5 KiB {0} [built]
+2025-12-05T00:27:39.711Z	    + 45 hidden modules
+2025-12-05T00:27:39.712Z	
+2025-12-05T00:27:39.712Z	WARNING in asset size limit: The following asset(s) exceed the recommended size limit (244 KiB).
+2025-12-05T00:27:39.712Z	This can impact web performance.
+2025-12-05T00:27:39.712Z	Assets: 
+2025-12-05T00:27:39.712Z	  ../libs/jquery-ui.js (509 KiB)
+2025-12-05T00:27:39.712Z	
+2025-12-05T00:27:39.712Z	WARNING in webpack performance recommendations: 
+2025-12-05T00:27:39.712Z	You can limit the size of your bundles by using import() or require.ensure to lazy load some parts of your application.
+2025-12-05T00:27:39.712Z	For more info visit https://webpack.js.org/guides/code-splitting/
+2025-12-05T00:27:39.791Z	Success: Build command completed
+2025-12-05T00:27:39.914Z	Executing user deploy command: npx wrangler deploy
+2025-12-05T00:27:41.344Z	npm warn exec The following package was not found and will be installed: wrangler@4.53.0
+2025-12-05T00:27:51.676Z	
+2025-12-05T00:27:51.677Z	 ⛅️ wrangler 4.53.0
+2025-12-05T00:27:51.677Z	───────────────────
+2025-12-05T00:27:51.692Z	
+2025-12-05T00:27:55.281Z	✘ [ERROR] Missing entry-point to Worker script or to assets directory
+2025-12-05T00:27:55.281Z	
+2025-12-05T00:27:55.281Z	  
+2025-12-05T00:27:55.281Z	  If there is code to deploy, you can either:
+2025-12-05T00:27:55.281Z	  - Specify an entry-point to your Worker script via the command line (ex: `npx wrangler deploy src/index.ts`)
+2025-12-05T00:27:55.281Z	  - Or create a "wrangler.jsonc" file containing:
+2025-12-05T00:27:55.281Z	  
+2025-12-05T00:27:55.281Z	  ```
+2025-12-05T00:27:55.281Z	  {
+2025-12-05T00:27:55.281Z	    "name": "worker-name",
+2025-12-05T00:27:55.281Z	    "compatibility_date": "2025-12-05",
+2025-12-05T00:27:55.281Z	    "main": "src/index.ts"
+2025-12-05T00:27:55.281Z	  }
+2025-12-05T00:27:55.282Z	  ```
+2025-12-05T00:27:55.282Z	  
+2025-12-05T00:27:55.282Z	  
+2025-12-05T00:27:55.282Z	  If are uploading a directory of assets, you can either:
+2025-12-05T00:27:55.282Z	  - Specify the path to the directory of assets via the command line: (ex: `npx wrangler deploy --assets=./dist`)
+2025-12-05T00:27:55.282Z	  - Or create a "wrangler.jsonc" file containing:
+2025-12-05T00:27:55.282Z	  
+2025-12-05T00:27:55.282Z	  ```
+2025-12-05T00:27:55.282Z	  {
+2025-12-05T00:27:55.282Z	    "name": "worker-name",
+2025-12-05T00:27:55.282Z	    "compatibility_date": "2025-12-05",
+2025-12-05T00:27:55.282Z	    "assets": {
+2025-12-05T00:27:55.282Z	      "directory": "./dist"
+2025-12-05T00:27:55.282Z	    }
+2025-12-05T00:27:55.282Z	  }
+2025-12-05T00:27:55.282Z	  ```
+2025-12-05T00:27:55.282Z	  
+2025-12-05T00:27:55.282Z	
+2025-12-05T00:27:55.282Z	
+2025-12-05T00:27:55.316Z	
+2025-12-05T00:27:55.316Z	Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
+2025-12-05T00:27:55.349Z	🪵  Logs were written to "/opt/buildhome/.config/.wrangler/logs/wrangler-2025-12-05_00-27-51_059.log"
+2025-12-05T00:27:55.558Z	Failed: error occurred while running deploy command

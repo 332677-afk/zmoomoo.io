@@ -126,6 +126,7 @@ export class Player {
         this.antiKnockback = false;
         this.noclipMode = false;
         this.lowDamageTimeout = null;
+        this.deaths = 0;
 
         // SPAWN:
         this.spawn = function(moofoll) {
@@ -669,6 +670,7 @@ export class Player {
                 }
                 doer.send("N", "kills", doer.kills, 1);
             }
+            this.deaths++;
             this.alive = false;
             this.send("P");
             iconCallback();

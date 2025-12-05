@@ -1190,7 +1190,7 @@ wss.on("connection", async (socket, req) => {
         if (player.accountUsername) {
             accountManager.updateClientSessionStats(player.id, {
                 kills: player.kills || 0,
-                deaths: player.alive === false && player.health <= 0 ? 1 : 0,
+                deaths: player.deaths || 0,
                 score: player.points || 0
             });
             
