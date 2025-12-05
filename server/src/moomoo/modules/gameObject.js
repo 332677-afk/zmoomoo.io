@@ -39,27 +39,27 @@ export class GameObject {
                 }
             }
             this.colDiv = data.colDiv || 1;
-            this.blocker = data.blocker || null;
+            this.blocker = data.blocker;
             this.ignoreCollision = data.ignoreCollision === true;
-            this.dontGather = data.dontGather || false;
-            this.hideFromEnemy = data.hideFromEnemy || false;
-            this.friction = data.friction || null;
-            this.projDmg = data.projDmg || null;
-            this.dmg = data.dmg || 0;
-            this.pDmg = data.pDmg || 0;
-            this.pps = data.pps || 0;
+            this.dontGather = data.dontGather;
+            this.hideFromEnemy = data.hideFromEnemy;
+            this.friction = data.friction;
+            this.projDmg = data.projDmg;
+            this.dmg = data.dmg;
+            this.pDmg = data.pDmg;
+            this.pps = data.pps;
             this.zIndex = data.zIndex || 0;
-            this.turnSpeed = data.turnSpeed || 0;
-            this.req = data.req || null;
-            this.trap = data.trap || false;
+            this.turnSpeed = data.turnSpeed;
+            this.req = data.req;
+            this.trap = data.trap === true;
             this.healCol = data.healCol || 0;
-            this.teleport = data.teleport || false;
-            this.boostSpeed = data.boostSpeed || 0;
+            this.teleport = data.teleport === true;
+            this.boostSpeed = typeof data.boostSpeed === 'number' ? data.boostSpeed : 0;
             this.projectile = data.projectile;
-            this.shootRange = data.shootRange || 0;
-            this.shootRate = data.shootRate || 0;
+            this.shootRange = data.shootRange;
+            this.shootRate = data.shootRate;
             this.shootCount = this.shootRate;
-            this.spawnPoint = data.spawnPoint || false;
+            this.spawnPoint = data.spawnPoint === true;
         };
 
         // GET HIT:
