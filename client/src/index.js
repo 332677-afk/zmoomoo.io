@@ -291,7 +291,7 @@ var customKeybinds = {
     spike: 'v',
     trap: 'f',
     windmill: 'n',
-    turret: 'h',
+    quickEquip: 'h',
     attack: 'click'
 };
 
@@ -2599,9 +2599,12 @@ function keyDown(event) {
             } else if (checkCustomKeybind(event, 'windmill') && player.items) {
                 var windmillIndex = findItemByName('windmill');
                 if (windmillIndex !== -1) selectToBuild(player.items[windmillIndex]);
-            } else if (checkCustomKeybind(event, 'turret') && player.items) {
-                var turretIndex = findItemByName('turret');
-                if (turretIndex !== -1) selectToBuild(player.items[turretIndex]);
+            } else if (checkCustomKeybind(event, 'quickEquip') && player.items && player.items.length > 0) {
+                if (player.buildIndex >= 0 && player.items.indexOf(player.buildIndex) !== -1) {
+                    selectToBuild(player.buildIndex);
+                } else {
+                    selectToBuild(player.items[0]);
+                }
             } else if (keyNum == 69) {
                 sendAutoGather();
             } else if (keyNum == 67) {
@@ -3527,9 +3530,6 @@ function updateGame() {
                     var statsParts = [];
                     if (typeof tmpObj.cps === "number" && tmpObj.cps >= 0) {
                         statsParts.push(Math.max(0, Math.round(tmpObj.cps)) + " CPS");
-                    }
-                    if (typeof tmpObj.ping === "number" && tmpObj.ping >= 0) {
-                        statsParts.push(tmpObj.ping + "ms");
                     }
                     if (statsParts.length > 0) {
                         var statsText = statsParts.join(" | ");

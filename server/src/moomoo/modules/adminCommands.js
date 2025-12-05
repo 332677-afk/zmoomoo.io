@@ -18,6 +18,97 @@ const ADMIN_LEVEL_NAMES = {
     [AdminLevel.Zahre]: 'Zahre'
 };
 
+const COMMAND_PERMISSIONS = {
+    'id': AdminLevel.Helper,
+    'ids': AdminLevel.Helper,
+    'tp': AdminLevel.Helper,
+    'teleportto': AdminLevel.Helper,
+    'speed': AdminLevel.Helper,
+    'hat': AdminLevel.Helper,
+    'accessory': AdminLevel.Helper,
+    'sethealth': AdminLevel.Helper,
+    
+    'kick': AdminLevel.Moderator,
+    'freeze': AdminLevel.Moderator,
+    'unfreeze': AdminLevel.Moderator,
+    'bring': AdminLevel.Moderator,
+    'mute': AdminLevel.Moderator,
+    'lowdmg': AdminLevel.Moderator,
+    'randomteleport': AdminLevel.Moderator,
+    'visible': AdminLevel.Moderator,
+    'invisible': AdminLevel.Moderator,
+    
+    'ban': AdminLevel.Staff,
+    'pardon': AdminLevel.Staff,
+    'promote': AdminLevel.Staff,
+    'kill': AdminLevel.Staff,
+    'strongbonk': AdminLevel.Staff,
+    'explode': AdminLevel.Staff,
+    'size': AdminLevel.Staff,
+    'bighead': AdminLevel.Staff,
+    'rainbow': AdminLevel.Staff,
+    'shake': AdminLevel.Staff,
+    'spin': AdminLevel.Staff,
+    'shield': AdminLevel.Staff,
+    'invincible': AdminLevel.Staff,
+    'cowmode': AdminLevel.Staff,
+    'animalify': AdminLevel.Staff,
+    'darkmode': AdminLevel.Staff,
+    'police': AdminLevel.Staff,
+    'disarm': AdminLevel.Staff,
+    'hatbig': AdminLevel.Staff,
+    'hatspin': AdminLevel.Staff,
+    'hatglitch': AdminLevel.Staff,
+    'hatshake': AdminLevel.Staff,
+    'hatmissing': AdminLevel.Staff,
+    'hatdrop': AdminLevel.Staff,
+    'hatrandom': AdminLevel.Staff,
+    'hatupside': AdminLevel.Staff,
+    'hatrainbow': AdminLevel.Staff,
+    'hatgrow': AdminLevel.Staff,
+    'hatswitch': AdminLevel.Staff,
+    'hattroll': AdminLevel.Staff,
+    
+    'give': AdminLevel.Admin,
+    'remove': AdminLevel.Admin,
+    'set': AdminLevel.Admin,
+    'setrank': AdminLevel.Admin,
+    'spawn': AdminLevel.Admin,
+    'mine': AdminLevel.Admin,
+    'crash': AdminLevel.Admin,
+    'enable': AdminLevel.Admin,
+    'disable': AdminLevel.Admin,
+    'broadcast': AdminLevel.Admin,
+    'smite': AdminLevel.Admin,
+    'mobmode': AdminLevel.Admin,
+    'clearbuilds': AdminLevel.Admin,
+    'clearinventory': AdminLevel.Admin,
+    'teleportclick': AdminLevel.Admin,
+    'giveweapon': AdminLevel.Admin,
+    'setrange': AdminLevel.Admin,
+    'gatling': AdminLevel.Admin,
+    'reflect': AdminLevel.Admin,
+    'instabreak': AdminLevel.Admin,
+    'ghost': AdminLevel.Admin,
+    'infinitebuild': AdminLevel.Admin,
+    'antiknockback': AdminLevel.Admin,
+    'noclip': AdminLevel.Admin,
+    'all': AdminLevel.Admin,
+    'setweaponspeed': AdminLevel.Admin,
+    'weaponvariant': AdminLevel.Admin,
+    'weaponrange': AdminLevel.Admin,
+    'superhammer': AdminLevel.Admin,
+    
+    'restart': AdminLevel.Owner,
+};
+
+const PROMOTE_MAX_LEVEL = {
+    [AdminLevel.Staff]: AdminLevel.Moderator,
+    [AdminLevel.Admin]: AdminLevel.Staff,
+    [AdminLevel.Owner]: AdminLevel.Admin,
+    [AdminLevel.Zahre]: AdminLevel.Owner
+};
+
 export class AdminCommands {
     constructor(game, accountManager = null) {
         this.game = game;
@@ -151,6 +242,26 @@ export class AdminCommands {
         return { command, params, player };
     }
 
+    getPlayerAdminLevel(player) {
+        if (!player.account) return AdminLevel.None;
+        return player.account.adminLevel ?? AdminLevel.None;
+    }
+
+    checkCommandPermission(command, player) {
+        const playerLevel = this.getPlayerAdminLevel(player);
+        const requiredLevel = COMMAND_PERMISSIONS[command];
+        
+        if (requiredLevel === undefined) {
+            return { allowed: false, requiredLevel: null, playerLevel, unknownCommand: true };
+        }
+        
+        return { 
+            allowed: playerLevel >= requiredLevel, 
+            requiredLevel,
+            playerLevel
+        };
+    }
+
     async executeCommand(commandData) {
         const { command, params, player } = commandData;
 
@@ -160,6 +271,19 @@ export class AdminCommands {
 
         if (!player.isAdmin) {
             return { success: false, message: 'You must be an admin to use this command' };
+        }
+
+        const permCheck = this.checkCommandPermission(command, player);
+        if (!permCheck.allowed) {
+            if (permCheck.unknownCommand) {
+                return { success: false, message: `Unknown command: /${command}` };
+            }
+            const requiredRankName = ADMIN_LEVEL_NAMES[permCheck.requiredLevel] || 'Unknown';
+            const playerRankName = ADMIN_LEVEL_NAMES[permCheck.playerLevel] || 'Player';
+            return { 
+                success: false, 
+                message: `Insufficient rank. Required: ${requiredRankName}, Your rank: ${playerRankName}` 
+            };
         }
 
         switch (command) {
@@ -318,12 +442,16 @@ export class AdminCommands {
             return { success: false, message: 'You must be logged into an account to use admin commands' };
         }
         
-        if (!player.account.adminLevel || player.account.adminLevel < 4) {
+        const accountLevel = player.account.adminLevel ?? AdminLevel.None;
+        if (accountLevel < AdminLevel.Helper) {
             return { success: false, message: 'You do not have admin privileges on this account' };
         }
         
         player.isAdmin = true;
-        player.adminLevel = player.account.adminLevel >= 4 ? 'full' : 'limited';
+        player.numericAdminLevel = accountLevel;
+        player.adminLevel = accountLevel >= AdminLevel.Admin ? 'full' : 'limited';
+        
+        const rankName = ADMIN_LEVEL_NAMES[accountLevel] || 'Unknown';
         
         const allPlayers = this.game.players
             .filter(p => p.alive)
@@ -340,7 +468,7 @@ export class AdminCommands {
         
         return {
             success: true,
-            message: `Admin access activated! Your ID: ${player.sid}. Welcome back, ${player.account.displayName}.`
+            message: `Admin access activated (${rankName})! Your ID: ${player.sid}. Welcome back, ${player.account.displayName}.`
         };
     }
 
@@ -1502,8 +1630,8 @@ export class AdminCommands {
         }
         
         const callerLevel = player.account?.adminLevel ?? 0;
-        if (callerLevel < AdminLevel.Admin) {
-            return { success: false, message: 'You need Admin level (4) or higher to use this command' };
+        if (callerLevel < AdminLevel.Staff) {
+            return { success: false, message: 'You need Staff level (3) or higher to use this command' };
         }
         
         const targetAccountId = params[0];
@@ -1516,8 +1644,13 @@ export class AdminCommands {
             return { success: false, message: `Invalid level. Valid levels: ${levelNames}` };
         }
         
-        if (newLevel >= callerLevel) {
-            return { success: false, message: `You can only promote to levels lower than your own (${callerLevel} - ${ADMIN_LEVEL_NAMES[callerLevel]})` };
+        const maxPromoteLevel = PROMOTE_MAX_LEVEL[callerLevel] ?? AdminLevel.None;
+        if (newLevel > maxPromoteLevel) {
+            const maxRankName = ADMIN_LEVEL_NAMES[maxPromoteLevel] || 'None';
+            return { 
+                success: false, 
+                message: `You can only promote up to ${maxRankName} (${maxPromoteLevel}). Your rank: ${ADMIN_LEVEL_NAMES[callerLevel]}` 
+            };
         }
         
         const targetAccount = await this.accountManager.getAccountById(targetAccountId);
@@ -1527,6 +1660,10 @@ export class AdminCommands {
         
         if (targetAccount.adminLevel >= callerLevel) {
             return { success: false, message: `Cannot modify rank of this account (their level ${targetAccount.adminLevel} >= your level ${callerLevel})` };
+        }
+        
+        if (newLevel < targetAccount.adminLevel && callerLevel < AdminLevel.Admin) {
+            return { success: false, message: `Only Admin level (4) or higher can demote users. Your rank: ${ADMIN_LEVEL_NAMES[callerLevel]}` };
         }
         
         const oldLevel = targetAccount.adminLevel;
@@ -1548,6 +1685,7 @@ export class AdminCommands {
         
         if (targetPlayer) {
             targetPlayer.account.adminLevel = newLevel;
+            targetPlayer.numericAdminLevel = newLevel;
             
             if (newLevel >= AdminLevel.Admin) {
                 targetPlayer.isAdmin = true;
@@ -1593,8 +1731,13 @@ export class AdminCommands {
             return { success: false, message: `Invalid level. Valid levels: ${levelNames}` };
         }
         
-        if (newLevel >= callerLevel) {
-            return { success: false, message: `You can only set ranks lower than your own level (${callerLevel} - ${ADMIN_LEVEL_NAMES[callerLevel]})` };
+        const maxPromoteLevel = PROMOTE_MAX_LEVEL[callerLevel] ?? AdminLevel.None;
+        if (newLevel > maxPromoteLevel) {
+            const maxRankName = ADMIN_LEVEL_NAMES[maxPromoteLevel] || 'None';
+            return { 
+                success: false, 
+                message: `You can only set ranks up to ${maxRankName} (${maxPromoteLevel}). Your rank: ${ADMIN_LEVEL_NAMES[callerLevel]}` 
+            };
         }
         
         const targetAccount = await this.accountManager.getAccount(targetUsername);
@@ -1625,6 +1768,7 @@ export class AdminCommands {
         
         if (targetPlayer) {
             targetPlayer.account.adminLevel = newLevel;
+            targetPlayer.numericAdminLevel = newLevel;
             
             if (newLevel >= AdminLevel.Admin) {
                 targetPlayer.isAdmin = true;
