@@ -4,6 +4,7 @@ import helmet from "helmet";
 import cors from "cors";
 import path from "node:path";
 import fs from "node:fs";
+import readline from "node:readline";
 import { WebSocketServer } from "ws";
 import { createServer } from "node:http";
 import { decode, encode } from "msgpack-lite";
@@ -1554,4 +1555,62 @@ server.listen(PORT, HOST, (error) => {
     console.log(`Server listening at http://${listenHost}:${listenPort}`);
     console.log(`[SessionStore] Session cleanup scheduled every ${SESSION_CLEANUP_INTERVAL / 1000}s`);
 
+});
+
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+    terminal: false
+});
+
+rl.on('line', async (line) => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+    
+    if (trimmed.startsWith('/promote')) {
+        const args = trimmed.split(' ');
+        if (args.length !== 3) {
+            console.log('[Console] Usage: /promote <account_id> <level>');
+            console.log('[Console] Level must be 0-6 (0=None, 1=Helper, 2=Mod, 3=Staff, 4=Admin, 5=Owner, 6=Zahre)');
+            return;
+        }
+        
+        const accountId = args[1];
+        const level = parseInt(args[2], 10);
+        
+        if (isNaN(level) || level < 0 || level > 6) {
+            console.log('[Console] Level must be a number between 0 and 6');
+            return;
+        }
+        
+        try {
+            const success = await accountManager.setAdminLevelById(accountId, level);
+            if (success) {
+                console.log(`[Console] Successfully set account ${accountId} to admin level ${level}`);
+                
+                const onlinePlayer = game.players.find(p => p.account?.accountId === accountId);
+                if (onlinePlayer) {
+                    onlinePlayer.account.adminLevel = level;
+                    if (level >= AdminLevel.Admin) {
+                        onlinePlayer.isAdmin = true;
+                        onlinePlayer.adminLevel = 'full';
+                    } else if (level >= AdminLevel.Helper) {
+                        onlinePlayer.isAdmin = true;
+                        onlinePlayer.adminLevel = 'limited';
+                    } else {
+                        onlinePlayer.isAdmin = false;
+                        onlinePlayer.adminLevel = null;
+                    }
+                    console.log(`[Console] Updated online player ${onlinePlayer.name}'s admin level`);
+                }
+            } else {
+                console.log(`[Console] Failed to promote: Account not found or invalid level`);
+            }
+        } catch (error) {
+            console.log(`[Console] Error promoting account: ${error.message}`);
+        }
+    } else if (trimmed.startsWith('/')) {
+        console.log(`[Console] Unknown command: ${trimmed.split(' ')[0]}`);
+        console.log('[Console] Available commands: /promote <account_id> <level>');
+    }
 });
