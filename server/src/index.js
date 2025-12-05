@@ -21,6 +21,7 @@ import { fileURLToPath } from "node:url";
 import { packetValidator, MAX_MESSAGE_SIZE } from "./security/packetValidator.js";
 import { rateLimiter, ESCALATION_LEVELS } from "./security/rateLimiter.js";
 import { createAntiCheatController, SUSPICION_THRESHOLDS } from "./security/antiCheat/index.js";
+import { sendPasswordResetEmail } from "./services/emailService.js";
 
 const SESSION_CLEANUP_INTERVAL = 5 * 60 * 1000;
 const SESSION_CHECK_INTERVAL = 60 * 1000;
@@ -273,7 +274,7 @@ app.get("/play", (req, res) => {
 
 app.post("/api/account/register", async (req, res) => {
     try {
-        const { username, password, displayName } = req.body;
+        const { username, password, displayName, email } = req.body;
 
         if (!username || typeof username !== 'string') {
             return res.status(400).json({ success: false, error: 'Username is required' });
@@ -281,6 +282,10 @@ app.post("/api/account/register", async (req, res) => {
 
         if (!password || typeof password !== 'string') {
             return res.status(400).json({ success: false, error: 'Password is required' });
+        }
+
+        if (!email || typeof email !== 'string') {
+            return res.status(400).json({ success: false, error: 'Email is required' });
         }
 
         if (username.length < 4 || username.length > 16) {
@@ -291,7 +296,7 @@ app.post("/api/account/register", async (req, res) => {
             return res.status(400).json({ success: false, error: 'Password must be 8-30 characters' });
         }
 
-        const result = await accountManager.createAccount(username, password, displayName);
+        const result = await accountManager.createAccount(username, password, displayName, email);
 
         if (result.success) {
             res.json({ success: true, account: result.account });
@@ -363,6 +368,123 @@ app.post("/api/account/validate-session", async (req, res) => {
     } catch (error) {
         console.error('[API] Validate session error:', error);
         res.status(500).json({ valid: false, error: 'Internal server error' });
+    }
+});
+
+const passwordResetAttempts = new Map();
+const PASSWORD_RESET_RATE_LIMIT = 3;
+const PASSWORD_RESET_RATE_WINDOW = 300000;
+
+function checkPasswordResetRateLimit(ip) {
+    const now = Date.now();
+    const attempts = passwordResetAttempts.get(ip) || { count: 0, firstAttempt: now };
+    
+    if (now - attempts.firstAttempt > PASSWORD_RESET_RATE_WINDOW) {
+        attempts.count = 1;
+        attempts.firstAttempt = now;
+    } else {
+        attempts.count++;
+    }
+    
+    passwordResetAttempts.set(ip, attempts);
+    return attempts.count <= PASSWORD_RESET_RATE_LIMIT;
+}
+
+app.post("/api/account/forgot-password", async (req, res) => {
+    try {
+        const ip = req.headers["x-forwarded-for"]?.split(",")[0] ?? req.socket.remoteAddress;
+        
+        if (!checkPasswordResetRateLimit(ip)) {
+            return res.status(429).json({ success: false, error: 'Too many requests. Please try again later.' });
+        }
+        
+        const { email } = req.body;
+        
+        if (!email || typeof email !== 'string') {
+            return res.status(400).json({ success: false, error: 'Email is required' });
+        }
+        
+        const emailLower = email.toLowerCase().trim();
+        
+        const result = await accountManager.generateResetToken(emailLower);
+        
+        if (!result.success) {
+            return res.status(400).json({ success: false, error: result.error });
+        }
+        
+        try {
+            const baseUrl = process.env.REPLIT_DEV_DOMAIN 
+                ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
+                : process.env.REPLIT_DEPLOYMENT_URL || 'http://localhost:5000';
+            const resetLink = `${baseUrl}/reset-password?token=${result.resetToken}`;
+            
+            await sendPasswordResetEmail(emailLower, result.resetCode, resetLink);
+            
+            res.json({ 
+                success: true, 
+                message: 'If an account exists with that email, a reset code has been sent.' 
+            });
+        } catch (emailError) {
+            console.error('[API] Failed to send reset email:', emailError);
+            res.json({ 
+                success: true, 
+                message: 'If an account exists with that email, a reset code has been sent.' 
+            });
+        }
+    } catch (error) {
+        console.error('[API] Forgot password error:', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
+app.post("/api/account/verify-reset-code", async (req, res) => {
+    try {
+        const { email, code } = req.body;
+        
+        if (!email || !code) {
+            return res.status(400).json({ success: false, error: 'Email and code are required' });
+        }
+        
+        const emailLower = email.toLowerCase().trim();
+        const result = await accountManager.verifyResetCode(emailLower, code);
+        
+        if (result.valid) {
+            res.json({ success: true, resetToken: result.resetToken });
+        } else {
+            res.status(400).json({ success: false, error: result.error });
+        }
+    } catch (error) {
+        console.error('[API] Verify reset code error:', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
+app.post("/api/account/reset-password", async (req, res) => {
+    try {
+        const { token, newPassword } = req.body;
+        
+        if (!token) {
+            return res.status(400).json({ success: false, error: 'Reset token is required' });
+        }
+        
+        if (!newPassword || typeof newPassword !== 'string') {
+            return res.status(400).json({ success: false, error: 'New password is required' });
+        }
+        
+        if (newPassword.length < 8 || newPassword.length > 30) {
+            return res.status(400).json({ success: false, error: 'Password must be 8-30 characters' });
+        }
+        
+        const result = await accountManager.resetPassword(token, newPassword);
+        
+        if (result.success) {
+            res.json({ success: true, message: 'Password has been reset successfully.' });
+        } else {
+            res.status(400).json({ success: false, error: result.error });
+        }
+    } catch (error) {
+        console.error('[API] Reset password error:', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
     }
 });
 
@@ -749,6 +871,11 @@ wss.on("connection", async (socket, req) => {
                                 }
                             } else {
                                 if (player.skins[id]) {
+                                    const hatSwitchResult = antiCheat.validateHatSwitch(player, id);
+                                    if (hatSwitchResult.suspicionScore > 0) {
+                                        antiCheat.addSuspicion(player.id || player.sid, hatSwitchResult.suspicionScore, 'HAT_SWITCH', addr);
+                                    }
+                                    
                                     player.skin = hat;
                                     player.skinIndex = player.skin.id;
                                     emit("5", 1, id, 0);
@@ -756,6 +883,11 @@ wss.on("connection", async (socket, req) => {
                             }
                         } else {
                             if (id == 0) {
+                                const hatSwitchResult = antiCheat.validateHatSwitch(player, 0);
+                                if (hatSwitchResult.suspicionScore > 0) {
+                                    antiCheat.addSuspicion(player.id || player.sid, hatSwitchResult.suspicionScore, 'HAT_SWITCH', addr);
+                                }
+                                
                                 player.skin = {};
                                 player.skinIndex = 0;
                                 emit("5", 1, 0, 0);
@@ -1033,14 +1165,37 @@ wss.on("connection", async (socket, req) => {
                     }
 
                     try {
-                        if (!accountManager.canCreateSession(username)) {
-                            emit("AUTH_RESULT", { success: false, error: 'Maximum sessions reached (2)' });
-                            break;
-                        }
-
                         const result = await accountManager.validatePassword(username, password);
 
                         if (result.success) {
+                            if (result.duplicateSessionDetected) {
+                                const duplicateMessage = "Your account was accessed from multiple locations. Both sessions have been terminated for security.";
+                                
+                                game.players.forEach(p => {
+                                    if (p.accountId === result.account.accountId && p.id !== player.id) {
+                                        try {
+                                            const pSocket = game.getPlayerSocket(p.id);
+                                            if (pSocket && pSocket.readyState === 1) {
+                                                pSocket.send(encode(['SECURITY_KICK', [duplicateMessage]]));
+                                                setTimeout(() => {
+                                                    try { pSocket.close(4011); } catch(e) {}
+                                                }, 100);
+                                            }
+                                        } catch(e) {}
+                                        
+                                        accountManager.removeSession(p.accountUsername);
+                                    }
+                                });
+                                
+                                sessionStore.invalidateUserSessions(result.account.accountId);
+                                
+                                emit("SECURITY_KICK", duplicateMessage);
+                                setTimeout(() => {
+                                    try { socket.close(4011); } catch(e) {}
+                                }, 100);
+                                break;
+                            }
+                            
                             if (player.account) {
                                 accountManager.removeSession(player.account.username);
                                 await accountManager.saveClientPlayTime(player.id);
@@ -1048,6 +1203,7 @@ wss.on("connection", async (socket, req) => {
 
                             player.account = result.account;
                             player.accountUsername = result.account.username;
+                            player.accountId = result.account.accountId;
                             player.joinedAt = Date.now();
                             
                             if (result.account.adminLevel > AdminLevel.None) {
@@ -1084,6 +1240,7 @@ wss.on("connection", async (socket, req) => {
                     const username = sanitizeInput(data[0], 16);
                     const password = data[1];
                     const displayName = sanitizeInput(data[2] || data[0], 20);
+                    const email = typeof data[3] === 'string' ? data[3].toLowerCase().trim() : '';
 
                     if (!validateUsername(username)) {
                         emit("REGISTER_RESULT", { success: false, error: 'Username must be 4-16 characters (letters, numbers, underscore only)' });
@@ -1095,12 +1252,18 @@ wss.on("connection", async (socket, req) => {
                         break;
                     }
 
+                    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                        emit("REGISTER_RESULT", { success: false, error: 'A valid email address is required' });
+                        break;
+                    }
+
                     try {
-                        const result = await accountManager.createAccount(username, password, displayName);
+                        const result = await accountManager.createAccount(username, password, displayName, email);
 
                         if (result.success) {
                             player.account = result.account;
                             player.accountUsername = result.account.username;
+                            player.accountId = result.account.accountId;
                             accountManager.addSession(username);
 
                             emit("REGISTER_RESULT", { 

@@ -1,6 +1,11 @@
 const BUILD_DISTANCE_MULTIPLIER = 3;
 const ATTACK_COOLDOWN_TOLERANCE = 0.8;
 const RESOURCE_SYNC_TOLERANCE = 10;
+const HAT_SWITCH_COOLDOWN = 100;
+const RAPID_HAT_SWITCH_THRESHOLD = 3;
+const HEAL_COOLDOWN_MS = 300;
+const PERFECT_HEAL_TOLERANCE_MS = 10;
+const RAPID_HEAL_THRESHOLD = 5;
 
 export class ActionValidator {
     constructor(config, items) {
@@ -18,7 +23,13 @@ export class ActionValidator {
                 resourceSpendingHistory: [],
                 suspicionScore: 0,
                 violations: [],
-                invalidActionCount: 0
+                invalidActionCount: 0,
+                hatSwitchTimings: [],
+                lastHatSwitchTime: 0,
+                rapidHatSwitchCount: 0,
+                healTimings: [],
+                lastHealTime: 0,
+                rapidHealCount: 0
             });
         }
         return this.playerData.get(playerId);
@@ -270,6 +281,132 @@ export class ActionValidator {
 
             this.recordViolation(player.id || player.sid, results.violations[0]);
         }
+
+        return results;
+    }
+
+    validateHatSwitch(player, hatId, timestamp = Date.now()) {
+        const results = {
+            valid: true,
+            violations: [],
+            suspicionScore: 0
+        };
+
+        const data = this.getPlayerData(player.id || player.sid);
+        const timeSinceLastSwitch = timestamp - data.lastHatSwitchTime;
+
+        if (data.lastHatSwitchTime > 0 && timeSinceLastSwitch < HAT_SWITCH_COOLDOWN) {
+            data.rapidHatSwitchCount++;
+            data.hatSwitchTimings.push(timeSinceLastSwitch);
+
+            if (data.hatSwitchTimings.length > 20) {
+                data.hatSwitchTimings.shift();
+            }
+
+            if (data.rapidHatSwitchCount >= RAPID_HAT_SWITCH_THRESHOLD) {
+                data.invalidActionCount++;
+                results.suspicionScore += 20;
+                results.violations.push({
+                    type: 'RAPID_HAT_SWITCHING',
+                    severity: Math.min(1, data.rapidHatSwitchCount / 10),
+                    evidence: {
+                        hatId,
+                        timeSinceLastSwitch,
+                        rapidSwitchCount: data.rapidHatSwitchCount,
+                        recentTimings: data.hatSwitchTimings.slice(-5),
+                        threshold: HAT_SWITCH_COOLDOWN
+                    }
+                });
+
+                this.recordViolation(player.id || player.sid, results.violations[0]);
+
+                if (data.rapidHatSwitchCount >= 5) {
+                    results.suspicionScore += 15;
+                }
+                if (data.rapidHatSwitchCount >= 10) {
+                    results.valid = false;
+                    results.suspicionScore += 25;
+                }
+            }
+        } else {
+            data.rapidHatSwitchCount = Math.max(0, data.rapidHatSwitchCount - 1);
+        }
+
+        data.lastHatSwitchTime = timestamp;
+
+        return results;
+    }
+
+    validateHealAction(player, healAmount, timestamp = Date.now()) {
+        const results = {
+            valid: true,
+            violations: [],
+            suspicionScore: 0
+        };
+
+        const data = this.getPlayerData(player.id || player.sid);
+        const timeSinceLastHeal = timestamp - data.lastHealTime;
+
+        data.healTimings.push(timeSinceLastHeal);
+        if (data.healTimings.length > 20) {
+            data.healTimings.shift();
+        }
+
+        if (data.lastHealTime > 0 && timeSinceLastHeal < HEAL_COOLDOWN_MS) {
+            data.rapidHealCount++;
+            data.invalidActionCount++;
+
+            results.suspicionScore += 15;
+            results.violations.push({
+                type: 'RAPID_HEALING',
+                severity: Math.min(1, data.rapidHealCount / 10),
+                evidence: {
+                    healAmount,
+                    timeSinceLastHeal,
+                    rapidHealCount: data.rapidHealCount,
+                    threshold: HEAL_COOLDOWN_MS
+                }
+            });
+
+            this.recordViolation(player.id || player.sid, results.violations[0]);
+
+            if (data.rapidHealCount >= RAPID_HEAL_THRESHOLD) {
+                results.valid = false;
+                results.suspicionScore += 25;
+            }
+        } else {
+            data.rapidHealCount = Math.max(0, data.rapidHealCount - 1);
+        }
+
+        if (data.healTimings.length >= 5) {
+            const recentTimings = data.healTimings.slice(-5);
+            const avgTiming = recentTimings.reduce((a, b) => a + b, 0) / recentTimings.length;
+            
+            let perfectCount = 0;
+            for (const timing of recentTimings) {
+                if (Math.abs(timing - avgTiming) <= PERFECT_HEAL_TOLERANCE_MS) {
+                    perfectCount++;
+                }
+            }
+
+            if (perfectCount >= 4) {
+                results.suspicionScore += 30;
+                results.violations.push({
+                    type: 'PERFECT_HEAL_TIMING',
+                    severity: 0.9,
+                    evidence: {
+                        recentTimings,
+                        averageTiming: avgTiming,
+                        perfectCount,
+                        tolerance: PERFECT_HEAL_TOLERANCE_MS
+                    }
+                });
+
+                this.recordViolation(player.id || player.sid, results.violations[results.violations.length - 1]);
+            }
+        }
+
+        data.lastHealTime = timestamp;
 
         return results;
     }

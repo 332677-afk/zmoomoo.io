@@ -468,11 +468,15 @@ function showAuthModal(isLogin) {
     var modalTitle = document.getElementById("authModalTitle");
     var authSubmitBtn = document.getElementById("authSubmitBtn");
     var displayNameGroup = document.getElementById("displayNameGroup");
+    var emailGroup = document.getElementById("emailGroup");
+    var forgotPasswordLink = document.getElementById("forgotPasswordLink");
     
     if (modal) modal.style.display = "flex";
     if (modalTitle) modalTitle.textContent = isLogin ? "Sign In" : "Create Account";
     if (authSubmitBtn) authSubmitBtn.textContent = isLogin ? "Sign In" : "Create Account";
     if (displayNameGroup) displayNameGroup.style.display = isLogin ? "none" : "block";
+    if (emailGroup) emailGroup.style.display = isLogin ? "none" : "block";
+    if (forgotPasswordLink) forgotPasswordLink.style.display = isLogin ? "block" : "none";
     
     window.authIsLogin = isLogin;
 }
@@ -485,6 +489,8 @@ function hideAuthModal() {
     document.getElementById("authUsername").value = "";
     document.getElementById("authPassword").value = "";
     document.getElementById("authDisplayName").value = "";
+    var authEmail = document.getElementById("authEmail");
+    if (authEmail) authEmail.value = "";
 }
 
 function showAuthError(message) {
@@ -499,6 +505,8 @@ function submitAuth() {
     var username = document.getElementById("authUsername").value.trim();
     var password = document.getElementById("authPassword").value;
     var displayName = document.getElementById("authDisplayName").value.trim();
+    var emailEl = document.getElementById("authEmail");
+    var email = emailEl ? emailEl.value.trim() : "";
     
     if (!username || !password) {
         showAuthError("Please fill in all required fields");
@@ -508,7 +516,16 @@ function submitAuth() {
     if (window.authIsLogin) {
         io.send("AUTH", username, password);
     } else {
-        io.send("REGISTER", username, password, displayName || username);
+        if (!email) {
+            showAuthError("Email is required for registration");
+            return;
+        }
+        var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            showAuthError("Please enter a valid email address");
+            return;
+        }
+        io.send("REGISTER", username, password, displayName || username, email);
     }
 }
 
@@ -523,6 +540,220 @@ window.showAuthModal = showAuthModal;
 window.hideAuthModal = hideAuthModal;
 window.submitAuth = submitAuth;
 window.logoutAccount = logoutAccount;
+
+var forgotPasswordEmail = "";
+var forgotPasswordToken = "";
+
+function showForgotPasswordModal() {
+    hideAuthModal();
+    var modal = document.getElementById("forgotPasswordModal");
+    if (modal) modal.style.display = "flex";
+    resetForgotPasswordSteps();
+}
+
+function hideForgotPasswordModal() {
+    var modal = document.getElementById("forgotPasswordModal");
+    if (modal) modal.style.display = "none";
+    resetForgotPasswordSteps();
+    forgotPasswordEmail = "";
+    forgotPasswordToken = "";
+}
+
+function resetForgotPasswordSteps() {
+    document.getElementById("forgotStep1").style.display = "block";
+    document.getElementById("forgotStep2").style.display = "none";
+    document.getElementById("forgotStep3").style.display = "none";
+    document.getElementById("forgotEmail").value = "";
+    document.getElementById("verifyCode").value = "";
+    document.getElementById("newPassword").value = "";
+    document.getElementById("confirmPassword").value = "";
+    hideForgotPasswordError();
+    hideForgotPasswordSuccess();
+}
+
+function showForgotPasswordError(message) {
+    var errorEl = document.getElementById("forgotPasswordError");
+    if (errorEl) {
+        errorEl.textContent = message;
+        errorEl.style.display = "block";
+    }
+    hideForgotPasswordSuccess();
+}
+
+function hideForgotPasswordError() {
+    var errorEl = document.getElementById("forgotPasswordError");
+    if (errorEl) errorEl.style.display = "none";
+}
+
+function showForgotPasswordSuccess(message) {
+    var successEl = document.getElementById("forgotPasswordSuccess");
+    if (successEl) {
+        successEl.textContent = message;
+        successEl.style.display = "block";
+    }
+    hideForgotPasswordError();
+}
+
+function hideForgotPasswordSuccess() {
+    var successEl = document.getElementById("forgotPasswordSuccess");
+    if (successEl) successEl.style.display = "none";
+}
+
+function sendResetCode() {
+    var email = document.getElementById("forgotEmail").value.trim();
+    if (!email) {
+        showForgotPasswordError("Please enter your email address");
+        return;
+    }
+    
+    var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        showForgotPasswordError("Please enter a valid email address");
+        return;
+    }
+    
+    forgotPasswordEmail = email;
+    var sendBtn = document.getElementById("sendCodeBtn");
+    if (sendBtn) {
+        sendBtn.disabled = true;
+        sendBtn.textContent = "Sending...";
+    }
+    
+    fetch("/api/account/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email })
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+        if (sendBtn) {
+            sendBtn.disabled = false;
+            sendBtn.textContent = "Send Code";
+        }
+        if (data.success) {
+            showForgotPasswordSuccess("Verification code sent to your email");
+            document.getElementById("forgotStep1").style.display = "none";
+            document.getElementById("forgotStep2").style.display = "block";
+        } else {
+            showForgotPasswordError(data.message || "Failed to send reset code");
+        }
+    })
+    .catch(function(err) {
+        if (sendBtn) {
+            sendBtn.disabled = false;
+            sendBtn.textContent = "Send Code";
+        }
+        showForgotPasswordError("Failed to send reset code. Please try again.");
+    });
+}
+
+function resendCode() {
+    if (forgotPasswordEmail) {
+        document.getElementById("forgotEmail").value = forgotPasswordEmail;
+        document.getElementById("forgotStep2").style.display = "none";
+        document.getElementById("forgotStep1").style.display = "block";
+        sendResetCode();
+    }
+}
+
+function verifyResetCode() {
+    var code = document.getElementById("verifyCode").value.trim();
+    if (!code || code.length !== 6) {
+        showForgotPasswordError("Please enter the 6-digit verification code");
+        return;
+    }
+    
+    var verifyBtn = document.getElementById("verifyCodeBtn");
+    if (verifyBtn) {
+        verifyBtn.disabled = true;
+        verifyBtn.textContent = "Verifying...";
+    }
+    
+    fetch("/api/account/verify-reset-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: forgotPasswordEmail, code: code })
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+        if (verifyBtn) {
+            verifyBtn.disabled = false;
+            verifyBtn.textContent = "Verify Code";
+        }
+        if (data.success) {
+            forgotPasswordToken = data.token;
+            showForgotPasswordSuccess("Code verified! Enter your new password.");
+            document.getElementById("forgotStep2").style.display = "none";
+            document.getElementById("forgotStep3").style.display = "block";
+        } else {
+            showForgotPasswordError(data.message || "Invalid or expired code");
+        }
+    })
+    .catch(function(err) {
+        if (verifyBtn) {
+            verifyBtn.disabled = false;
+            verifyBtn.textContent = "Verify Code";
+        }
+        showForgotPasswordError("Failed to verify code. Please try again.");
+    });
+}
+
+function resetPassword() {
+    var newPassword = document.getElementById("newPassword").value;
+    var confirmPassword = document.getElementById("confirmPassword").value;
+    
+    if (!newPassword || newPassword.length < 8) {
+        showForgotPasswordError("Password must be at least 8 characters");
+        return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+        showForgotPasswordError("Passwords do not match");
+        return;
+    }
+    
+    var resetBtn = document.getElementById("resetPasswordBtn");
+    if (resetBtn) {
+        resetBtn.disabled = true;
+        resetBtn.textContent = "Resetting...";
+    }
+    
+    fetch("/api/account/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: forgotPasswordToken, newPassword: newPassword })
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+        if (resetBtn) {
+            resetBtn.disabled = false;
+            resetBtn.textContent = "Reset Password";
+        }
+        if (data.success) {
+            showForgotPasswordSuccess("Password reset successfully! You can now sign in.");
+            setTimeout(function() {
+                hideForgotPasswordModal();
+                showAuthModal(true);
+            }, 2000);
+        } else {
+            showForgotPasswordError(data.message || "Failed to reset password");
+        }
+    })
+    .catch(function(err) {
+        if (resetBtn) {
+            resetBtn.disabled = false;
+            resetBtn.textContent = "Reset Password";
+        }
+        showForgotPasswordError("Failed to reset password. Please try again.");
+    });
+}
+
+window.showForgotPasswordModal = showForgotPasswordModal;
+window.hideForgotPasswordModal = hideForgotPasswordModal;
+window.sendResetCode = sendResetCode;
+window.resendCode = resendCode;
+window.verifyResetCode = verifyResetCode;
+window.resetPassword = resetPassword;
 
 function showNotification(message) {
     var notification = document.getElementById("notificationDisplay");

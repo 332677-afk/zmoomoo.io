@@ -316,6 +316,52 @@ export class AntiCheatController {
         return this.actions.validateUpgrade(player, upgradeIndex);
     }
 
+    validateHatSwitch(player, hatId) {
+        return this.actions.validateHatSwitch(player, hatId);
+    }
+
+    validateHealAction(player, healAmount) {
+        return this.actions.validateHealAction(player, healAmount);
+    }
+
+    recordTick(playerId, timestamp) {
+        this.telemetry.recordTick(playerId, timestamp);
+    }
+
+    recordActionPattern(playerId, actionType, timestamp) {
+        this.telemetry.recordActionPattern(playerId, actionType, timestamp);
+    }
+
+    analyzeTickRate(playerId) {
+        return this.telemetry.analyzeTickRate(playerId);
+    }
+
+    analyzeInputFrequency(playerId) {
+        return this.telemetry.analyzeInputFrequency(playerId);
+    }
+
+    analyzeActionPatterns(playerId) {
+        return this.telemetry.analyzeActionPatterns(playerId);
+    }
+
+    addSuspicion(playerId, score, reason, ipAddress) {
+        const playerScore = this.getPlayerScore(playerId);
+        playerScore.components.actions += score;
+        playerScore.total = Math.min(100,
+            playerScore.components.telemetry * 0.3 +
+            playerScore.components.movement * 0.25 +
+            playerScore.components.activity * 0.2 +
+            playerScore.components.actions * 0.25
+        );
+        playerScore.lastUpdate = Date.now();
+
+        if (score >= 15) {
+            console.log(`[AntiCheat] Suspicion added for ${playerId}: +${score} (${reason}). Total: ${playerScore.total.toFixed(1)}`);
+        }
+
+        return playerScore;
+    }
+
     removePlayer(playerId) {
         this.telemetry.removePlayer(playerId);
         this.movement.removePlayer(playerId);

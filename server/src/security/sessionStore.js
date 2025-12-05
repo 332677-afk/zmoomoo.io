@@ -224,6 +224,29 @@ class SessionStore {
             };
         }).filter(Boolean);
     }
+    
+    getSessionCountForUser(userId) {
+        if (!userId) return 0;
+        const tokens = this.userSessionMap.get(userId);
+        return tokens ? tokens.size : 0;
+    }
+    
+    getAllUserSessions(userId) {
+        if (!userId) return [];
+        const tokens = this.userSessionMap.get(userId);
+        if (!tokens) return [];
+        
+        return Array.from(tokens).map(token => {
+            const session = this.sessions.get(token);
+            if (!session) return null;
+            return {
+                token: token,
+                createdAt: session.createdAt,
+                lastActivity: session.lastActivity,
+                expiresAt: session.expiresAt
+            };
+        }).filter(Boolean);
+    }
 
     getStats() {
         return {

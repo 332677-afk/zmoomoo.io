@@ -643,6 +643,11 @@
                 <input id="authUsername" type="text" placeholder="4-16 characters" maxlength="16" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px; box-sizing: border-box;">
             </div>
             
+            <div id="emailGroup" style="margin-bottom: 12px; display: none;">
+                <label style="display: block; margin-bottom: 4px; font-weight: 600; color: #555; font-size: 14px;">Email</label>
+                <input id="authEmail" type="email" placeholder="your@email.com" maxlength="255" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px; box-sizing: border-box;">
+            </div>
+            
             <div style="margin-bottom: 12px;">
                 <label style="display: block; margin-bottom: 4px; font-weight: 600; color: #555; font-size: 14px;">Password</label>
                 <input id="authPassword" type="password" placeholder="8-30 characters" maxlength="30" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px; box-sizing: border-box;">
@@ -654,6 +659,64 @@
             </div>
             
             <button id="authSubmitBtn" onclick="submitAuth()" style="width: 100%; padding: 12px; background: #7ee559; color: #fff; border: none; border-radius: 6px; font-size: 16px; font-weight: 600; cursor: pointer;">Sign In</button>
+            
+            <div id="forgotPasswordLink" style="text-align: center; margin-top: 12px;">
+                <a href="#" onclick="showForgotPasswordModal(); return false;" style="color: #2196f3; font-size: 13px; text-decoration: none;">Forgot Password?</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Forgot Password Modal -->
+    <div id="forgotPasswordModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; align-items: center; justify-content: center;">
+        <div style="background: #fff; border-radius: 12px; padding: 24px; width: 340px; max-width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h2 style="margin: 0; color: #333; font-size: 20px;">Reset Password</h2>
+                <span onclick="hideForgotPasswordModal()" style="cursor: pointer; font-size: 24px; color: #999;">&times;</span>
+            </div>
+            
+            <div id="forgotPasswordError" style="display: none; background: #ffe0e0; color: #c00; padding: 10px; border-radius: 6px; margin-bottom: 12px; font-size: 14px;"></div>
+            <div id="forgotPasswordSuccess" style="display: none; background: #e0ffe0; color: #080; padding: 10px; border-radius: 6px; margin-bottom: 12px; font-size: 14px;"></div>
+            
+            <!-- Step 1: Enter Email -->
+            <div id="forgotStep1">
+                <p style="font-size: 14px; color: #666; margin-bottom: 16px;">Enter your email address and we'll send you a verification code.</p>
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; margin-bottom: 4px; font-weight: 600; color: #555; font-size: 14px;">Email Address</label>
+                    <input id="forgotEmail" type="email" placeholder="your@email.com" maxlength="255" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px; box-sizing: border-box;">
+                </div>
+                <button id="sendCodeBtn" onclick="sendResetCode()" style="width: 100%; padding: 12px; background: #2196f3; color: #fff; border: none; border-radius: 6px; font-size: 16px; font-weight: 600; cursor: pointer;">Send Code</button>
+            </div>
+            
+            <!-- Step 2: Verify Code -->
+            <div id="forgotStep2" style="display: none;">
+                <p style="font-size: 14px; color: #666; margin-bottom: 16px;">Enter the 6-digit code sent to your email.</p>
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; margin-bottom: 4px; font-weight: 600; color: #555; font-size: 14px;">Verification Code</label>
+                    <input id="verifyCode" type="text" placeholder="123456" maxlength="6" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 18px; text-align: center; letter-spacing: 8px; box-sizing: border-box;">
+                </div>
+                <button id="verifyCodeBtn" onclick="verifyResetCode()" style="width: 100%; padding: 12px; background: #2196f3; color: #fff; border: none; border-radius: 6px; font-size: 16px; font-weight: 600; cursor: pointer;">Verify Code</button>
+                <div style="text-align: center; margin-top: 10px;">
+                    <a href="#" onclick="resendCode(); return false;" style="color: #888; font-size: 12px;">Didn't receive code? Resend</a>
+                </div>
+            </div>
+            
+            <!-- Step 3: New Password -->
+            <div id="forgotStep3" style="display: none;">
+                <p style="font-size: 14px; color: #666; margin-bottom: 16px;">Create a new password for your account.</p>
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; margin-bottom: 4px; font-weight: 600; color: #555; font-size: 14px;">New Password</label>
+                    <input id="newPassword" type="password" placeholder="8-30 characters" maxlength="30" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px; box-sizing: border-box;">
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; margin-bottom: 4px; font-weight: 600; color: #555; font-size: 14px;">Confirm Password</label>
+                    <input id="confirmPassword" type="password" placeholder="Repeat password" maxlength="30" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px; box-sizing: border-box;">
+                </div>
+                <button id="resetPasswordBtn" onclick="resetPassword()" style="width: 100%; padding: 12px; background: #7ee559; color: #fff; border: none; border-radius: 6px; font-size: 16px; font-weight: 600; cursor: pointer;">Reset Password</button>
+            </div>
+            
+            <div style="text-align: center; margin-top: 12px;">
+                <a href="#" onclick="hideForgotPasswordModal(); showAuthModal(true); return false;" style="color: #666; font-size: 13px; text-decoration: none;">Back to Sign In</a>
+            </div>
         </div>
     </div>
     

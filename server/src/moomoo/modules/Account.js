@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs';
+import crypto from 'node:crypto';
 import { db, isDatabaseConnected } from '../../db.js';
 import { accounts, AdminLevel } from '../../../../shared/schema.js';
 import { eq, sql, desc } from 'drizzle-orm';
@@ -11,6 +12,9 @@ const PRESERVED_ACCOUNT_IDS = {
     'zahre': 'XUJP2NIB'
 };
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const RESET_TOKEN_EXPIRY_MS = 15 * 60 * 1000;
+
 function generateAccountId(username = null) {
     if (username && PRESERVED_ACCOUNT_IDS[username.toLowerCase()]) {
         return PRESERVED_ACCOUNT_IDS[username.toLowerCase()];
@@ -21,6 +25,16 @@ function generateAccountId(username = null) {
         id += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return id;
+}
+
+function generateResetCode() {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+function validateEmail(email) {
+    if (!email || typeof email !== 'string') return false;
+    if (email.length > 255) return false;
+    return EMAIL_REGEX.test(email);
 }
 
 export class AccountManager {
@@ -75,7 +89,22 @@ export class AccountManager {
         }
     }
 
-    async createAccount(username, password, displayName = null) {
+    async getAccountByEmail(email) {
+        if (!email || typeof email !== 'string') return null;
+        if (!this.isDatabaseAvailable()) return null;
+        
+        const emailLower = email.toLowerCase();
+        
+        try {
+            const [account] = await db.select().from(accounts).where(eq(accounts.email, emailLower));
+            return account || null;
+        } catch (error) {
+            console.error('[Account] Error getting account by email:', error);
+            return null;
+        }
+    }
+
+    async createAccount(username, password, displayName = null, email = null) {
         if (!this.isDatabaseAvailable()) {
             return { success: false, error: 'Database not connected. Please add DATABASE_URL in Secrets.' };
         }
@@ -85,13 +114,26 @@ export class AccountManager {
         if (!password || typeof password !== 'string') {
             return { success: false, error: 'Password is required' };
         }
+        if (!email || typeof email !== 'string') {
+            return { success: false, error: 'Email is required' };
+        }
+        
+        if (!validateEmail(email)) {
+            return { success: false, error: 'Invalid email format' };
+        }
         
         const usernameLower = username.toLowerCase();
+        const emailLower = email.toLowerCase();
         
         try {
             const existing = await this.getAccount(usernameLower);
             if (existing) {
                 return { success: false, error: 'Username already exists' };
+            }
+            
+            const existingEmail = await this.getAccountByEmail(emailLower);
+            if (existingEmail) {
+                return { success: false, error: 'Email already registered' };
             }
 
             if (username.length < 4 || username.length > 16) {
@@ -121,6 +163,7 @@ export class AccountManager {
                 username: usernameLower,
                 displayName: displayName || username,
                 passwordHash: passwordHash,
+                email: emailLower,
                 adminLevel: AdminLevel.None,
                 balance: 0,
                 kills: 0,
@@ -132,7 +175,7 @@ export class AccountManager {
                 currentTribe: null,
             }).returning();
 
-            console.log(`[Account] Created account ${usernameLower} with ID ${accountId}`);
+            console.log(`[Account] Created account ${usernameLower} with ID ${accountId} and email ${emailLower}`);
             return { success: true, account: this.sanitizeAccount(account) };
         } catch (error) {
             console.error('[Account] Error creating account:', error);
@@ -165,13 +208,17 @@ export class AccountManager {
                 
                 this.invalidateCache(username);
                 
+                const existingSessionCount = sessionStore.getSessionCountForUser(account.accountId);
+                const duplicateSessionDetected = existingSessionCount > 0;
+                
                 const sessionResult = sessionStore.createSession(account.accountId);
                 
                 return { 
                     success: true, 
                     account: this.sanitizeAccount(account),
                     sessionToken: sessionResult.success ? sessionResult.token : null,
-                    sessionExpiresAt: sessionResult.success ? sessionResult.expiresAt : null
+                    sessionExpiresAt: sessionResult.success ? sessionResult.expiresAt : null,
+                    duplicateSessionDetected
                 };
             } else {
                 return { success: false, error: 'Invalid password' };
@@ -179,6 +226,161 @@ export class AccountManager {
         } catch (error) {
             console.error('[Account] Error validating password:', error);
             return { success: false, error: 'Failed to validate password' };
+        }
+    }
+    
+    async generateResetToken(email) {
+        if (!this.isDatabaseAvailable()) {
+            return { success: false, error: 'Database not connected' };
+        }
+        if (!email || typeof email !== 'string') {
+            return { success: false, error: 'Email is required' };
+        }
+        
+        const emailLower = email.toLowerCase();
+        
+        try {
+            const account = await this.getAccountByEmail(emailLower);
+            if (!account) {
+                return { success: false, error: 'No account found with that email' };
+            }
+            
+            const resetCode = generateResetCode();
+            const resetToken = crypto.randomUUID();
+            const expiresAt = new Date(Date.now() + RESET_TOKEN_EXPIRY_MS);
+            
+            await db.update(accounts)
+                .set({ 
+                    resetToken: `${resetCode}:${resetToken}`,
+                    resetTokenExpiresAt: expiresAt 
+                })
+                .where(eq(accounts.email, emailLower));
+            
+            this.invalidateCache(account.username);
+            
+            console.log(`[Account] Generated reset token for ${emailLower}`);
+            return { 
+                success: true, 
+                resetCode,
+                resetToken,
+                email: emailLower,
+                expiresAt
+            };
+        } catch (error) {
+            console.error('[Account] Error generating reset token:', error);
+            return { success: false, error: 'Failed to generate reset token' };
+        }
+    }
+    
+    async validateResetToken(token) {
+        if (!this.isDatabaseAvailable()) {
+            return { valid: false, error: 'Database not connected' };
+        }
+        if (!token || typeof token !== 'string') {
+            return { valid: false, error: 'Token is required' };
+        }
+        
+        try {
+            const [account] = await db.select().from(accounts)
+                .where(sql`${accounts.resetToken} LIKE ${'%' + token}`);
+            
+            if (!account) {
+                return { valid: false, error: 'Invalid or expired token' };
+            }
+            
+            if (!account.resetTokenExpiresAt || new Date() > new Date(account.resetTokenExpiresAt)) {
+                await db.update(accounts)
+                    .set({ resetToken: null, resetTokenExpiresAt: null })
+                    .where(eq(accounts.id, account.id));
+                return { valid: false, error: 'Token has expired' };
+            }
+            
+            return { valid: true, accountId: account.accountId, username: account.username };
+        } catch (error) {
+            console.error('[Account] Error validating reset token:', error);
+            return { valid: false, error: 'Failed to validate token' };
+        }
+    }
+    
+    async verifyResetCode(email, code) {
+        if (!this.isDatabaseAvailable()) {
+            return { valid: false, error: 'Database not connected' };
+        }
+        if (!email || !code) {
+            return { valid: false, error: 'Email and code are required' };
+        }
+        
+        const emailLower = email.toLowerCase();
+        
+        try {
+            const account = await this.getAccountByEmail(emailLower);
+            if (!account) {
+                return { valid: false, error: 'Account not found' };
+            }
+            
+            if (!account.resetToken || !account.resetTokenExpiresAt) {
+                return { valid: false, error: 'No reset request found' };
+            }
+            
+            if (new Date() > new Date(account.resetTokenExpiresAt)) {
+                await db.update(accounts)
+                    .set({ resetToken: null, resetTokenExpiresAt: null })
+                    .where(eq(accounts.email, emailLower));
+                return { valid: false, error: 'Code has expired' };
+            }
+            
+            const [storedCode, resetToken] = account.resetToken.split(':');
+            if (storedCode !== code) {
+                return { valid: false, error: 'Invalid code' };
+            }
+            
+            return { valid: true, resetToken };
+        } catch (error) {
+            console.error('[Account] Error verifying reset code:', error);
+            return { valid: false, error: 'Failed to verify code' };
+        }
+    }
+    
+    async resetPassword(token, newPassword) {
+        if (!this.isDatabaseAvailable()) {
+            return { success: false, error: 'Database not connected' };
+        }
+        if (!token || typeof token !== 'string') {
+            return { success: false, error: 'Token is required' };
+        }
+        if (!newPassword || typeof newPassword !== 'string') {
+            return { success: false, error: 'New password is required' };
+        }
+        if (newPassword.length < 8 || newPassword.length > 30) {
+            return { success: false, error: 'Password must be 8-30 characters' };
+        }
+        
+        try {
+            const tokenValidation = await this.validateResetToken(token);
+            if (!tokenValidation.valid) {
+                return { success: false, error: tokenValidation.error };
+            }
+            
+            const salt = await bcrypt.genSalt(12);
+            const passwordHash = await bcrypt.hash(newPassword, salt);
+            
+            await db.update(accounts)
+                .set({ 
+                    passwordHash: passwordHash,
+                    resetToken: null,
+                    resetTokenExpiresAt: null
+                })
+                .where(eq(accounts.accountId, tokenValidation.accountId));
+            
+            this.invalidateCache(tokenValidation.username);
+            
+            sessionStore.invalidateUserSessions(tokenValidation.accountId);
+            
+            console.log(`[Account] Password reset for ${tokenValidation.username}`);
+            return { success: true };
+        } catch (error) {
+            console.error('[Account] Error resetting password:', error);
+            return { success: false, error: 'Failed to reset password' };
         }
     }
     
@@ -200,7 +402,7 @@ export class AccountManager {
 
     sanitizeAccount(account) {
         if (!account) return null;
-        const { passwordHash, ipAddress, ...sanitized } = account;
+        const { passwordHash, ipAddress, resetToken, resetTokenExpiresAt, ...sanitized } = account;
         sanitized.rankName = this.getAdminLevelName(account.adminLevel);
         sanitized.isStaff = account.adminLevel >= AdminLevel.Helper;
         sanitized.isAdmin = account.adminLevel >= AdminLevel.Admin;

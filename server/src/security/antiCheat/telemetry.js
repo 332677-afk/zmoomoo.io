@@ -4,6 +4,10 @@ const BOT_STDDEV_THRESHOLD = 50;
 const MAX_ATTACKS_PER_SECOND = 15;
 const PERFECT_INTERVAL_TOLERANCE = 5;
 const PERFECT_INTERVAL_COUNT_THRESHOLD = 8;
+const TICK_RATE_WINDOW_MS = 1000;
+const EXPECTED_TICK_RATE = 9;
+const TICK_RATE_TOLERANCE = 3;
+const ABNORMAL_INPUT_FREQUENCY_THRESHOLD = 50;
 
 export class TelemetryAnalyzer {
     constructor() {
@@ -20,7 +24,13 @@ export class TelemetryAnalyzer {
                 suspicionScore: 0,
                 violations: [],
                 attacksInWindow: 0,
-                windowStart: Date.now()
+                windowStart: Date.now(),
+                tickRateSamples: [],
+                lastTickTime: 0,
+                ticksInWindow: 0,
+                tickWindowStart: Date.now(),
+                actionPatterns: new Map(),
+                inputFrequencyHistory: []
             });
         }
         return this.playerData.get(playerId);
@@ -185,6 +195,185 @@ export class TelemetryAnalyzer {
     getAttacksPerSecond(playerId) {
         const data = this.getPlayerData(playerId);
         return data.attacksInWindow;
+    }
+
+    recordTick(playerId, timestamp = Date.now()) {
+        const data = this.getPlayerData(playerId);
+        
+        const now = timestamp;
+        if (now - data.tickWindowStart >= TICK_RATE_WINDOW_MS) {
+            if (data.ticksInWindow > 0) {
+                data.tickRateSamples.push(data.ticksInWindow);
+                if (data.tickRateSamples.length > 30) {
+                    data.tickRateSamples.shift();
+                }
+            }
+            data.ticksInWindow = 0;
+            data.tickWindowStart = now;
+        }
+        
+        data.ticksInWindow++;
+        data.lastTickTime = timestamp;
+    }
+
+    analyzeTickRate(playerId) {
+        const data = this.getPlayerData(playerId);
+        const results = {
+            suspicionScore: 0,
+            violations: [],
+            details: {}
+        };
+
+        if (data.tickRateSamples.length < 5) {
+            return results;
+        }
+
+        const avgTickRate = data.tickRateSamples.reduce((a, b) => a + b, 0) / data.tickRateSamples.length;
+        results.details.averageTickRate = avgTickRate;
+
+        if (avgTickRate > EXPECTED_TICK_RATE + TICK_RATE_TOLERANCE) {
+            const deviation = avgTickRate - EXPECTED_TICK_RATE;
+            const severity = Math.min(1, deviation / 10);
+            results.suspicionScore += Math.round(20 * severity);
+            results.violations.push({
+                type: 'ABNORMAL_TICK_RATE',
+                severity: severity,
+                evidence: {
+                    averageTickRate,
+                    expected: EXPECTED_TICK_RATE,
+                    tolerance: TICK_RATE_TOLERANCE,
+                    sampleSize: data.tickRateSamples.length
+                }
+            });
+        }
+
+        const tickStdDev = this.calculateStandardDeviation(data.tickRateSamples);
+        results.details.tickRateStandardDeviation = tickStdDev;
+
+        if (tickStdDev < 0.5 && data.tickRateSamples.length >= 10) {
+            results.suspicionScore += 25;
+            results.violations.push({
+                type: 'PERFECTLY_CONSISTENT_TICK_RATE',
+                severity: 0.8,
+                evidence: {
+                    standardDeviation: tickStdDev,
+                    samples: data.tickRateSamples.slice(-10)
+                }
+            });
+        }
+
+        return results;
+    }
+
+    recordActionPattern(playerId, actionType, timestamp = Date.now()) {
+        const data = this.getPlayerData(playerId);
+        
+        if (!data.actionPatterns.has(actionType)) {
+            data.actionPatterns.set(actionType, {
+                timings: [],
+                lastTime: 0
+            });
+        }
+        
+        const pattern = data.actionPatterns.get(actionType);
+        
+        if (pattern.lastTime > 0) {
+            const interval = timestamp - pattern.lastTime;
+            pattern.timings.push(interval);
+            
+            if (pattern.timings.length > 30) {
+                pattern.timings.shift();
+            }
+        }
+        
+        pattern.lastTime = timestamp;
+    }
+
+    analyzeInputFrequency(playerId) {
+        const data = this.getPlayerData(playerId);
+        const results = {
+            suspicionScore: 0,
+            violations: [],
+            details: {}
+        };
+
+        if (data.inputTimings.length < 20) {
+            return results;
+        }
+
+        const recentInputs = data.inputTimings.slice(-20);
+        const avgInterval = recentInputs.reduce((a, b) => a + b, 0) / recentInputs.length;
+        const stdDev = this.calculateStandardDeviation(recentInputs);
+
+        results.details.averageInputInterval = avgInterval;
+        results.details.inputIntervalStdDev = stdDev;
+
+        if (avgInterval < 20) {
+            const severity = Math.min(1, (20 - avgInterval) / 20);
+            results.suspicionScore += Math.round(35 * severity);
+            results.violations.push({
+                type: 'ABNORMALLY_FAST_INPUTS',
+                severity: severity,
+                evidence: {
+                    averageInterval: avgInterval,
+                    minimumExpected: 20,
+                    sampleSize: recentInputs.length
+                }
+            });
+        }
+
+        if (stdDev < 3 && avgInterval < ABNORMAL_INPUT_FREQUENCY_THRESHOLD) {
+            results.suspicionScore += 30;
+            results.violations.push({
+                type: 'ROBOTIC_INPUT_PATTERN',
+                severity: 0.9,
+                evidence: {
+                    standardDeviation: stdDev,
+                    averageInterval: avgInterval,
+                    threshold: 3
+                }
+            });
+        }
+
+        return results;
+    }
+
+    analyzeActionPatterns(playerId) {
+        const data = this.getPlayerData(playerId);
+        const results = {
+            suspicionScore: 0,
+            violations: [],
+            patterns: {}
+        };
+
+        for (const [actionType, pattern] of data.actionPatterns.entries()) {
+            if (pattern.timings.length < 10) continue;
+
+            const stdDev = this.calculateStandardDeviation(pattern.timings);
+            const avgTiming = pattern.timings.reduce((a, b) => a + b, 0) / pattern.timings.length;
+
+            results.patterns[actionType] = {
+                averageTiming: avgTiming,
+                standardDeviation: stdDev,
+                sampleSize: pattern.timings.length
+            };
+
+            if (stdDev < 5 && pattern.timings.length >= 15) {
+                results.suspicionScore += 20;
+                results.violations.push({
+                    type: 'PERFECTLY_CONSISTENT_ACTION_TIMING',
+                    severity: 0.7,
+                    evidence: {
+                        actionType,
+                        standardDeviation: stdDev,
+                        averageTiming: avgTiming,
+                        sampleSize: pattern.timings.length
+                    }
+                });
+            }
+        }
+
+        return results;
     }
 
     removePlayer(playerId) {
