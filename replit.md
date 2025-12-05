@@ -49,6 +49,8 @@ Key architectural decisions include:
 - Enhanced kick system with proper overlay and localStorage tracking
 - Updated /promote command to use account ID with permission-based restrictions
 - Cleaned up menu UI by removing unused Hats/Accessory/Weapon dropdown
+- Added console /promote command with full level 0-6 access
+- Redesigned Enter Game section with centered character and full-width button
 
 ## External Dependencies
 - **WebSocket-capable Hosting Platform**: Required for the server (e.g., Railway, Render, Fly.io). Vercel is used for static client hosting.
