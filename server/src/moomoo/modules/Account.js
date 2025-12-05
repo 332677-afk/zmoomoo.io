@@ -8,23 +8,11 @@ import { sessionStore } from '../../security/sessionStore.js';
 export { AdminLevel };
 export { sessionStore };
 
-const PRESERVED_ACCOUNT_IDS = {
-    'zahre': 'XUJP2NIB'
-};
-
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const RESET_TOKEN_EXPIRY_MS = 15 * 60 * 1000;
 
-function generateAccountId(username = null) {
-    if (username && PRESERVED_ACCOUNT_IDS[username.toLowerCase()]) {
-        return PRESERVED_ACCOUNT_IDS[username.toLowerCase()];
-    }
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let id = '';
-    for (let i = 0; i < 8; i++) {
-        id += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return id;
+function generateAccountId() {
+    return crypto.randomBytes(4).toString('hex').toUpperCase();
 }
 
 function generateResetCode() {
@@ -156,7 +144,7 @@ export class AccountManager {
             const salt = await bcrypt.genSalt(12);
             const passwordHash = await bcrypt.hash(password, salt);
 
-            let accountId = generateAccountId(username);
+            let accountId = generateAccountId();
             let existingId = await this.getAccountById(accountId);
             while (existingId) {
                 accountId = generateAccountId();

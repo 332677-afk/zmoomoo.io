@@ -312,11 +312,13 @@ export class ObjectManager {
                             }
                         }
                     } else {
+                        console.log('[DEBUG BOOST] ignoreCollision object detected:', other.name, 'trap:', other.trap, 'boostSpeed:', other.boostSpeed, 'group:', other.group?.name);
                         if (other.trap && !player.noTrap && other.owner != player && !(other.owner && other.owner.team && other.owner.team == player.team)) {
                             player.lockMove = true;
                             other.hideFromEnemy = false;
                         } else {
                             if (other.boostSpeed) {
+                                console.log('[DEBUG BOOST] Boost pad triggered! boostSpeed:', other.boostSpeed, 'lastBoostTime:', player.lastBoostTime);
                                 if (!player.lastBoostTime || Date.now() - player.lastBoostTime > 100) {
                                     player.lastBoostTime = Date.now();
                                     var boostForce = other.boostSpeed * 80 * (other.weightM || 1);
@@ -328,8 +330,10 @@ export class ObjectManager {
                                     } else {
                                         boostDir = other.dir;
                                     }
+                                    console.log('[DEBUG BOOST] Applying boost - force:', boostForce, 'dir:', boostDir, 'before xVel:', player.xVel, 'yVel:', player.yVel);
                                     player.xVel += boostForce * mathCOS(boostDir);
                                     player.yVel += boostForce * mathSIN(boostDir);
+                                    console.log('[DEBUG BOOST] After boost - xVel:', player.xVel, 'yVel:', player.yVel);
                                 }
                             } else {
                                 if (other.healCol) {

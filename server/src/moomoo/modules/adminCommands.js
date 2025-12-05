@@ -1,5 +1,6 @@
 import { items } from './items.js';
 import { hats, accessories } from './store.js';
+import { AdminLevel } from '../../../../shared/schema.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -7,9 +8,20 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const ADMIN_LEVEL_NAMES = {
+    [AdminLevel.None]: 'Player',
+    [AdminLevel.Helper]: 'Helper',
+    [AdminLevel.Moderator]: 'Moderator',
+    [AdminLevel.Staff]: 'Staff',
+    [AdminLevel.Admin]: 'Admin',
+    [AdminLevel.Owner]: 'Owner',
+    [AdminLevel.Zahre]: 'Zahre'
+};
+
 export class AdminCommands {
-    constructor(game) {
+    constructor(game, accountManager = null) {
         this.game = game;
+        this.accountManager = accountManager;
         this.bannedIPs = new Map();
         this.bansFilePath = path.resolve(__dirname, '../../../data/bans.json');
         this.loadBans();
@@ -256,6 +268,8 @@ export class AdminCommands {
                 return this.handleBroadcast(params, player);
             case 'promote':
                 return this.handlePromote(params, player);
+            case 'setrank':
+                return this.handleSetRank(params, player);
             case 'restart':
                 return this.handleRestart(params, player);
             case 'weaponrange':
@@ -1496,6 +1510,83 @@ export class AdminCommands {
         });
         
         return { success: true, message: `Promoted ${targets.length} player(s) to admin` };
+    }
+
+    async handleSetRank(params, player) {
+        if (params.length < 2) {
+            return { success: false, message: 'Usage: /setrank [username] [level 0-6]' };
+        }
+        
+        if (!this.accountManager) {
+            return { success: false, message: 'Account system not available' };
+        }
+        
+        const callerLevel = player.account?.adminLevel ?? 0;
+        if (callerLevel < AdminLevel.Admin) {
+            return { success: false, message: 'You need Admin level (4) or higher to use this command' };
+        }
+        
+        const targetUsername = params[0].toLowerCase();
+        const newLevel = parseInt(params[1]);
+        
+        if (!Number.isFinite(newLevel) || newLevel < AdminLevel.None || newLevel > AdminLevel.Zahre) {
+            const levelNames = Object.entries(ADMIN_LEVEL_NAMES)
+                .map(([level, name]) => `${level}=${name}`)
+                .join(', ');
+            return { success: false, message: `Invalid level. Valid levels: ${levelNames}` };
+        }
+        
+        if (newLevel >= callerLevel) {
+            return { success: false, message: `You can only set ranks lower than your own level (${callerLevel} - ${ADMIN_LEVEL_NAMES[callerLevel]})` };
+        }
+        
+        const targetAccount = await this.accountManager.getAccount(targetUsername);
+        if (!targetAccount) {
+            return { success: false, message: `Account "${targetUsername}" not found` };
+        }
+        
+        if (targetAccount.adminLevel >= callerLevel) {
+            return { success: false, message: `Cannot modify rank of ${targetUsername} (their level ${targetAccount.adminLevel} >= your level ${callerLevel})` };
+        }
+        
+        const oldLevel = targetAccount.adminLevel;
+        const success = await this.accountManager.setAdminLevel(targetUsername, newLevel);
+        
+        if (!success) {
+            return { success: false, message: 'Failed to update account rank in database' };
+        }
+        
+        const oldRankName = ADMIN_LEVEL_NAMES[oldLevel] || 'Unknown';
+        const newRankName = ADMIN_LEVEL_NAMES[newLevel] || 'Unknown';
+        const callerName = player.account?.displayName || player.name || 'Unknown';
+        
+        console.log(`[Admin] ${callerName} (${player.account?.username || 'N/A'}) set rank for ${targetUsername}: ${oldLevel} (${oldRankName}) -> ${newLevel} (${newRankName})`);
+        
+        const targetPlayer = this.game.players.find(p => 
+            p.account && p.account.username.toLowerCase() === targetUsername
+        );
+        
+        if (targetPlayer) {
+            targetPlayer.account.adminLevel = newLevel;
+            
+            if (newLevel >= AdminLevel.Admin) {
+                targetPlayer.isAdmin = true;
+                targetPlayer.adminLevel = 'full';
+            } else if (newLevel >= AdminLevel.Helper) {
+                targetPlayer.isAdmin = true;
+                targetPlayer.adminLevel = 'limited';
+            } else {
+                targetPlayer.isAdmin = false;
+                targetPlayer.adminLevel = null;
+            }
+            
+            targetPlayer.send('6', -1, `Your rank has been changed to ${newRankName} (level ${newLevel}) by ${callerName}`);
+        }
+        
+        return { 
+            success: true, 
+            message: `Set ${targetUsername}'s rank from ${oldRankName} (${oldLevel}) to ${newRankName} (${newLevel})` 
+        };
     }
 
     handleRestart(params, player) {

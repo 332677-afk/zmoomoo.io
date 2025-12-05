@@ -194,8 +194,8 @@ if (!fs.existsSync(INDEX)) {
 }
 
 const game = new Game;
-const adminCommands = new AdminCommands(game);
 const accountManager = new AccountManager();
+const adminCommands = new AdminCommands(game, accountManager);
 
 const antiCheat = createAntiCheatController(config, items);
 game.setAntiCheat(antiCheat);
