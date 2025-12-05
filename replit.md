@@ -203,6 +203,21 @@ If no DATABASE_URL is set, the server runs in "guest-only mode":
 - Account registration/login shows "Database not connected" error
 - No persistent stats or accounts
 
+## Recent Changes (December 5, 2025)
+- **Boost Pad Fix**: Changed from gradual velocity addition to impulse-based boost system
+  - Now sets velocity directly (15x boost magnitude) when stepping on pad
+  - Prevents velocity dampening from negating boost effect
+  - Applied to both server and client objectManager.js
+- **Deaths Tracking Fix**: Deaths now properly accumulate during gameplay
+  - Added session-based deaths counter to player constructor
+  - Deaths increment on each kill event, not just disconnect
+  - Stats persist correctly across multiple deaths in a session
+- **UI Cleanup**:
+  - Removed TOP PLAYERS leaderboard panel from main menu
+  - Removed Weapon Upgrade Level panel from game tab
+- **Leaderboard Overflow Fix**: Long player names no longer break layout
+  - Added max-width constraint with text-overflow ellipsis
+
 ## Recent Changes (December 4, 2025)
 - **Guest Mode System**:
   - Non-logged-in players automatically get "Guest#XXXXX" names (random 5-digit numbers)
