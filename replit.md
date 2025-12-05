@@ -39,6 +39,16 @@ Key architectural decisions include:
     - **Anti-Cheat System**: Detects timing anomalies, movement validation (speed/teleport hacks), activity monitoring, rapid hat switching, auto-heal detection, tick rate analysis, and input pattern analysis. Violations contribute to a suspicion score leading to warnings, kicks, or bans.
 - **UI/UX**: Simplification of UI elements like rank displays and removal of certain panels for a cleaner interface. Leaderboard handles long names with `text-overflow ellipsis`.
 - **Game Mechanics**: Boost pads utilize impulse-based velocity for consistent effects. Deaths are tracked persistently within sessions.
+- **Boost Pad System**: Uses per-frame tracking (Set data structure) to prevent duplicate boost applications when overlapping multiple pads. Boost pads are breakable by owners (150 health).
+- **Ban/Kick Persistence**: Ban and kick status are saved to localStorage and displayed on the menu when reloading, showing time remaining for temporary bans.
+- **Promote Command**: `/promote [account_id] [level]` with permission hierarchy (Admin→0-3, Owner→0-4, Zahre→0-5).
+
+## Recent Changes
+- Fixed boost pad collision bug where 3rd pad would slow players
+- Enhanced ban system with localStorage persistence and countdown display
+- Enhanced kick system with proper overlay and localStorage tracking
+- Updated /promote command to use account ID with permission-based restrictions
+- Cleaned up menu UI by removing unused Hats/Accessory/Weapon dropdown
 
 ## External Dependencies
 - **WebSocket-capable Hosting Platform**: Required for the server (e.g., Railway, Render, Fly.io). Vercel is used for static client hosting.
