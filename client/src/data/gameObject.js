@@ -32,7 +32,7 @@ module.exports = function (sid) {
         }
         this.colDiv = data.colDiv || 1;
         this.blocker = data.blocker;
-        this.ignoreCollision = data.ignoreCollision;
+        this.ignoreCollision = data.ignoreCollision === true;
         this.dontGather = data.dontGather;
         this.hideFromEnemy = data.hideFromEnemy;
         this.friction = data.friction;
@@ -43,15 +43,15 @@ module.exports = function (sid) {
         this.zIndex = data.zIndex || 0;
         this.turnSpeed = data.turnSpeed;
         this.req = data.req;
-        this.trap = data.trap;
-        this.healCol = data.healCol;
-        this.teleport = data.teleport;
-        this.boostSpeed = data.boostSpeed;
+        this.trap = data.trap === true;
+        this.healCol = data.healCol || 0;
+        this.teleport = data.teleport === true;
+        this.boostSpeed = typeof data.boostSpeed === 'number' ? data.boostSpeed : 0;
         this.projectile = data.projectile;
         this.shootRange = data.shootRange;
         this.shootRate = data.shootRate;
         this.shootCount = this.shootRate;
-        this.spawnPoint = data.spawnPoint;
+        this.spawnPoint = data.spawnPoint === true;
     };
 
     this.changeHealth = function (amount, doer) {
