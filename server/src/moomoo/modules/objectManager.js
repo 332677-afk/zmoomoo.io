@@ -184,6 +184,9 @@ export class ObjectManager {
                 tmpObj.sid = sid;
             }
             tmpObj.init(x, y, dir, s, type, data, owner);
+            if (data && data.name) {
+                console.log('[DEBUG PLACE]', data.name, '- boostSpeed:', tmpObj.boostSpeed, 'ignoreCollision:', tmpObj.ignoreCollision, 'id:', data.id);
+            }
             if (server) {
                 this.setObjectGrids(tmpObj);
                 if (tmpObj.doUpdate) {
@@ -269,6 +272,9 @@ export class ObjectManager {
             if ((player.ghostMode || player.noclipMode) && !other.isPlayer) {
                 return false;
             }
+            if (other.boostSpeed) {
+                console.log('[DEBUG BOOST] Checking collision with boost pad - player:', player.x.toFixed(0), player.y.toFixed(0), 'obj:', other.x.toFixed(0), other.y.toFixed(0), 'boostSpeed:', other.boostSpeed);
+            }
             var dx = player.x - other.x;
             var dy = player.y - other.y;
             var tmpLen = player.scale + other.scale;
@@ -323,7 +329,7 @@ export class ObjectManager {
                                     player.lastBoostTime = Date.now();
                                     var boostForce = other.boostSpeed * 80 * (other.weightM || 1);
                                     var boostDir;
-                                    if (player.moveDir !== undefined) {
+                                    if (player.moveDir !== undefined && player.moveDir !== null) {
                                         boostDir = player.moveDir;
                                     } else if (mathABS(player.xVel) > 0.05 || mathABS(player.yVel) > 0.05) {
                                         boostDir = Math.atan2(player.yVel, player.xVel);
