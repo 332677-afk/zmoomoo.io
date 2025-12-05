@@ -635,11 +635,15 @@ wss.on("connection", async (socket, req) => {
     const sessionToken = urlParams.get('sessionToken');
     
     let sessionUserId = null;
+    let sessionAccount = null;
     if (sessionToken) {
         const sessionValidation = sessionStore.validateSession(sessionToken);
         if (sessionValidation.valid) {
             sessionUserId = sessionValidation.session.userId;
             sessionStore.refreshSession(sessionToken);
+            
+            // Fetch fresh account data for auto-login
+            sessionAccount = await accountManager.getAccountById(sessionUserId);
         }
     }
 
@@ -660,6 +664,34 @@ wss.on("connection", async (socket, req) => {
         if (!player.socket) return;
         socket.send(encode([type, data]));
     };
+    
+    // Auto-login: If user reconnects with valid session, send fresh account data
+    if (sessionAccount) {
+        const sanitizedAccount = accountManager.sanitizeAccount(sessionAccount);
+        player.account = sanitizedAccount;
+        player.accountUsername = sessionAccount.username;
+        player.accountId = sessionAccount.accountId;
+        player.joinedAt = Date.now();
+        
+        if (sessionAccount.adminLevel > AdminLevel.None) {
+            player.isAdmin = true;
+            player.adminLevel = sessionAccount.adminLevel;
+        }
+        
+        accountManager.addSession(sessionAccount.username);
+        accountManager.trackClientSession(player.id, sessionAccount.username, player.joinedAt);
+        sessionStore.registerWebSocket(sessionAccount.accountId, socket, player.id);
+        
+        // Send fresh account data to client (includes deaths, kills, etc from database)
+        emit("AUTH_RESULT", { 
+            success: true, 
+            account: sanitizedAccount,
+            message: `Welcome back, ${sanitizedAccount.displayName}!`,
+            autoLogin: true
+        });
+        
+        console.log(`[Account] Auto-login: Player ${player.sid} authenticated as ${sessionAccount.username}`);
+    }
     
     const checkSessionExpiry = () => {
         if (!player.sessionToken) return;

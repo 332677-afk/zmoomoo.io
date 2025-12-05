@@ -1041,6 +1041,7 @@ var AiManager = require("./data/aiManager.js");
 var AI = require("./data/ai.js");
 var aiManager = new AiManager(ais, AI, players, items, null, config, UTILS);
 var player, playerSID, tmpObj;
+var lastNonFoodBuildIndex = null;
 var objectRenderBuckets = Object.create(null);
 var objectRenderLayers = [-1, 0, 1, 2, 3];
 objectRenderLayers.forEach(function (layer) {
@@ -2602,8 +2603,10 @@ function keyDown(event) {
             } else if (checkCustomKeybind(event, 'quickEquip') && player.items && player.items.length > 0) {
                 if (player.buildIndex >= 0 && player.items.indexOf(player.buildIndex) !== -1) {
                     selectToBuild(player.buildIndex);
-                } else {
-                    selectToBuild(player.items[0]);
+                } else if (lastNonFoodBuildIndex !== null && player.items.indexOf(lastNonFoodBuildIndex) !== -1) {
+                    selectToBuild(lastNonFoodBuildIndex);
+                } else if (player.items.length > 1) {
+                    selectToBuild(player.items[1]);
                 }
             } else if (keyNum == 69) {
                 sendAutoGather();
@@ -2727,6 +2730,12 @@ function sendAutoGather() {
 }
 
 function selectToBuild(index, wpn) {
+    if (!wpn && index !== undefined && player && player.items) {
+        var itemData = items.list[index];
+        if (itemData && itemData.group && itemData.group.id !== 0) {
+            lastNonFoodBuildIndex = index;
+        }
+    }
     io.send("z", index, wpn);
 }
 
@@ -4695,6 +4704,8 @@ var pingValueElement = null;
 var cpsValueElement = null;
 var fpsValueElement = null;
 var packetValueElement = null;
+var topPingDisplay = null;
+var topPingValueElement = null;
 var clickTimestamps = [];
 var clientCps = 0;
 var statsDirty = true;
@@ -4707,12 +4718,17 @@ function initPerformanceDisplay() {
     cpsValueElement = document.getElementById("cpsValue");
     fpsValueElement = document.getElementById("fpsValue");
     packetValueElement = document.getElementById("packetValue");
+    topPingDisplay = document.getElementById("topPingDisplay");
+    topPingValueElement = document.getElementById("topPingValue");
     updatePerformancePanelVisibility();
 }
 
 function updatePerformancePanelVisibility() {
     if (performanceDisplay) {
-        performanceDisplay.style.display = showPing ? "flex" : "none";
+        performanceDisplay.style.display = "none";
+    }
+    if (topPingDisplay) {
+        topPingDisplay.style.display = showPing ? "block" : "none";
     }
 }
 
@@ -4795,6 +4811,9 @@ function pingSocketResponse() {
     window.pingTime = pingTime;
     if (pingValueElement) {
         pingValueElement.textContent = pingTime + "ms";
+    }
+    if (topPingValueElement) {
+        topPingValueElement.textContent = pingTime + "ms";
     }
     statsDirty = true;
 }

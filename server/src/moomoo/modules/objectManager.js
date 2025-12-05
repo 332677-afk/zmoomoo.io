@@ -288,8 +288,11 @@ export class ObjectManager {
                         } else {
                             player.x = other.x + tmpLen * mathCOS(tmpDir);
                             player.y = other.y + tmpLen * mathSIN(tmpDir);
-                            player.xVel *= 0.75;
-                            player.yVel *= 0.75;
+                            // Only apply velocity dampening if player wasn't boosted this frame
+                            if (!player.boostedThisFrame) {
+                                player.xVel *= 0.75;
+                                player.yVel *= 0.75;
+                            }
                         }
                         if (other.dmg && other.owner != player && !(other.owner && other.owner.team && other.owner.team == player.team)) {
                             player.changeHealth(-other.dmg, other.owner, other);
@@ -318,6 +321,11 @@ export class ObjectManager {
                         } else if (other.boostSpeed) {
                             if (!player.boostPadsThisFrame.has(other.sid)) {
                                 player.boostPadsThisFrame.add(other.sid);
+                                // Reset slowMult to prevent movement slowdown while boosting
+                                player.slowMult = 1;
+                                // Mark that player was boosted this frame to prevent velocity dampening
+                                player.boostedThisFrame = true;
+                                // Apply boost velocity
                                 player.xVel += other.boostSpeed * (other.weightM || 1) * mathCOS(other.dir);
                                 player.yVel += other.boostSpeed * (other.weightM || 1) * mathSIN(other.dir);
                             }

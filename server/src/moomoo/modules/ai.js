@@ -232,7 +232,7 @@ export class AI {
                                 if (!this.hitWait && tmpDst <= this.hitRange + tmpObj.scale) {
                                     if (hitting) {
                                         tmpDir = UTILS.getDirection(tmpObj.x, tmpObj.y, this.x, this.y);
-                                        tmpObj.changeHealth(-this.dmg);
+                                        tmpObj.changeHealth(-this.dmg, null);
                                         tmpObj.xVel += 0.6 * Math.cos(tmpDir);
                                         tmpObj.yVel += 0.6 * Math.sin(tmpDir);
                                         this.runFrom = null;
@@ -246,7 +246,7 @@ export class AI {
                             } else {
                                 if (tmpDst <= this.scale + tmpObj.scale) {
                                     tmpDir = UTILS.getDirection(tmpObj.x, tmpObj.y, this.x, this.y);
-                                    tmpObj.changeHealth(-this.dmg);
+                                    tmpObj.changeHealth(-this.dmg, null);
                                     tmpObj.xVel += 0.55 * Math.cos(tmpDir);
                                     tmpObj.yVel += 0.55 * Math.sin(tmpDir);
                                 }

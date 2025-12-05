@@ -106,7 +106,7 @@ const PROMOTE_MAX_LEVEL = {
     [AdminLevel.Staff]: AdminLevel.Moderator,
     [AdminLevel.Admin]: AdminLevel.Staff,
     [AdminLevel.Owner]: AdminLevel.Admin,
-    [AdminLevel.Zahre]: AdminLevel.Owner
+    [AdminLevel.Zahre]: AdminLevel.Zahre
 };
 
 export class AdminCommands {
@@ -1699,6 +1699,13 @@ export class AdminCommands {
             }
             
             targetPlayer.send('6', -1, `Your rank has been changed to ${newRankName} (level ${newLevel}) by ${callerName}`);
+            
+            for (const p of this.game.players) {
+                if (p.active && p.alive) {
+                    p.send('D', targetPlayer.getData(), p.id === targetPlayer.id);
+                }
+            }
+            targetPlayer.sentTo = {};
         }
         
         return { 
@@ -1782,6 +1789,13 @@ export class AdminCommands {
             }
             
             targetPlayer.send('6', -1, `Your rank has been changed to ${newRankName} (level ${newLevel}) by ${callerName}`);
+            
+            for (const p of this.game.players) {
+                if (p.active && p.alive) {
+                    p.send('D', targetPlayer.getData(), p.id === targetPlayer.id);
+                }
+            }
+            targetPlayer.sentTo = {};
         }
         
         return { 

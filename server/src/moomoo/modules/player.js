@@ -438,6 +438,7 @@ export class Player {
             this.lockMove = false;
             this.healCol = 0;
             this.boostPadsThisFrame = new Set();
+            this.boostedThisFrame = false;
 
             (() => {
 
@@ -672,6 +673,7 @@ export class Player {
                 doer.send("N", "kills", doer.kills, 1);
             }
             this.deaths++;
+            this.send("N", "deaths", this.deaths, 1);
             this.alive = false;
             this.send("P");
             iconCallback();
