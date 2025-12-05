@@ -601,6 +601,10 @@ function initGuestMode() {
     }
 }
 
+var sessionDeaths = 0;
+var sessionStartTime = null;
+var totalSessionPlayTime = 0;
+
 function updateRealTimeStats() {
     if (player && currentAccount) {
         var accountScore = document.getElementById("accountScore");
@@ -610,6 +614,24 @@ function updateRealTimeStats() {
         var accountKills = document.getElementById("accountKills");
         if (accountKills) {
             accountKills.textContent = formatNumber(player.kills || 0);
+        }
+        var accountDeaths = document.getElementById("accountDeaths");
+        if (accountDeaths) {
+            var totalDeaths = (currentAccount.deaths || 0) + sessionDeaths;
+            accountDeaths.textContent = formatNumber(totalDeaths);
+        }
+        var accountHighScore = document.getElementById("accountHighScore");
+        if (accountHighScore) {
+            var currentScore = player.points || 0;
+            var savedHighScore = currentAccount.highestScore || 0;
+            var displayHighScore = Math.max(currentScore, savedHighScore);
+            accountHighScore.textContent = formatNumber(displayHighScore);
+        }
+        var accountPlayTime = document.getElementById("accountPlayTime");
+        if (accountPlayTime) {
+            var currentSessionTime = sessionStartTime ? (Date.now() - sessionStartTime) : 0;
+            var totalPlayTime = (currentAccount.playTime || 0) + totalSessionPlayTime + currentSessionTime;
+            accountPlayTime.textContent = formatPlayTime(totalPlayTime);
         }
     }
 }
@@ -2393,6 +2415,7 @@ function enterGame() {
     saveVal("moo_name", nameInput.value);
     if (!inGame && socketReady()) {
         inGame = true;
+        sessionStartTime = Date.now();
         showLoadingText("Loading...");
         io.send("M", {
             name: nameInput.value,
@@ -2400,6 +2423,12 @@ function enterGame() {
             skin: skinColor
         });
     }
+}
+
+function resetSessionStats() {
+    sessionDeaths = 0;
+    totalSessionPlayTime = 0;
+    sessionStartTime = null;
 }
 
 var firstSetup = true;
@@ -2657,6 +2686,11 @@ function showWarning(warningCount) {
 function killPlayer() {
     try {
         inGame = false;
+        sessionDeaths++;
+        if (sessionStartTime) {
+            totalSessionPlayTime += Date.now() - sessionStartTime;
+            sessionStartTime = null;
+        }
         try {
             factorem.refreshAds([2], true);
         } catch (e) { };

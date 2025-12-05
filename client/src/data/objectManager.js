@@ -260,11 +260,20 @@ module.exports = function (GameObject, gameObjects, UTILS, config, players, serv
                     player.lockMove = true;
                     other.hideFromEnemy = false;
                 } else if (other.boostSpeed) {
-                    var boostForce = other.boostSpeed * 25 * (other.weightM || 1);
-                    var boostDirX = mathCOS(other.dir);
-                    var boostDirY = mathSIN(other.dir);
-                    player.xVel = boostForce * boostDirX;
-                    player.yVel = boostForce * boostDirY;
+                    if (!player.lastBoostTime || Date.now() - player.lastBoostTime > 200) {
+                        player.lastBoostTime = Date.now();
+                        var boostForce = other.boostSpeed * 40 * (other.weightM || 1);
+                        var boostDir;
+                        if (player.moveDir !== undefined) {
+                            boostDir = player.moveDir;
+                        } else if (mathABS(player.xVel) > 0.1 || mathABS(player.yVel) > 0.1) {
+                            boostDir = Math.atan2(player.yVel, player.xVel);
+                        } else {
+                            boostDir = other.dir;
+                        }
+                        player.xVel = boostForce * mathCOS(boostDir);
+                        player.yVel = boostForce * mathSIN(boostDir);
+                    }
                 } else if (other.healCol) {
                     player.healCol = other.healCol;
                 } else if (other.teleport) {
